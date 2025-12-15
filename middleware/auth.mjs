@@ -1,38 +1,28 @@
-import * as userRepository from "../dao/user.mjs";
+import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/jwt.js";
 
-const AUTH_ERROR = { message: "인증 에러" };
+export const isAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
 
-export const isAuth = async (req, res, next) => {
-    const authHeader = req.get("Authorization");
-    console.log(authHeader);
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "토큰이 없습니다" });
+  }
 
-    if (!(authHeader && authHeader.startsWith("Bearer "))) {
-        // 인증 실패
-        console.log("Header Error");
-        return res.status(401).json(AUTH_ERROR);
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    // ✅ 핵심: sign({ id: ... }) 했으니 decoded.id
+    req.userId = decoded.id;
+    req.user = { _id: decoded.id };
+
+    if (!req.userId) {
+      return res.status(401).json({ message: "토큰에 사용자 정보가 없습니다" });
     }
 
-    // 인증 성공
-    const token = authHeader.split(" ")[1];
-    console.log("토큰 분리 성공:", token);
-
-    jwt.verify(token, JWT_SECRET, async (error, decoded) => {
-        if (error) {
-            console.log(error);
-            return res.status(401).json(AUTH_ERROR);
-        }
-        console.log(decoded);
-        const user = await authRepository.findById(decoded.id);
-
-        if (!user) {
-            console.log("아이디 없음");
-            return res.status(401).json(AUTH_ERROR);
-        }
-        console.log("user id:", user.id);
-        console.log("user.userid:", user.userid);
-        req.id = user.id;
-
-        next();
-    });
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "유효하지 않은 토큰입니다" });
+  }
 };

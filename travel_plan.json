@@ -1,0 +1,72 @@
+{
+    "title": "대구 카페 탐방 2일 여행",
+    "description": "서울역에서 출발하여 대구의 매력적인 카페들을 탐방하며 여유로운 시간을 보낼 수 있는 2일간의 특별한 여행입니다. 감성적인 공간에서 커피와 디저트를 즐기며 도시의 정취를 만끽하세요.",
+    "travel_plan": [
+        {
+            "day": 1,
+            "places": [
+                {
+                    "name": "올드크럼브",
+                    "description": "따뜻하고 아늑한 분위기에서 향긋한 커피를 즐길 수 있는 카페입니다.",
+                    "coords": "35.8025972320455, 128.531585738873",
+                    "estimated_cost": 12000,
+                    "closest_subway": "현충로역"
+                },
+                {
+                    "name": "잇츠",
+                    "description": "다양한 디저트와 함께 커피를 맛볼 수 있는 트렌디한 공간입니다.",
+                    "coords": "35.8057180085665, 128.531369098816",
+                    "estimated_cost": 12000,
+                    "closest_subway": "현충로역"
+                },
+                {
+                    "name": "두어커피",
+                    "description": "편안한 분위기에서 책을 읽거나 친구와 대화하기 좋은 아늑한 카페입니다.",
+                    "coords": "35.8069452509469, 128.538295832959",
+                    "estimated_cost": 12000,
+                    "closest_subway": "영대병원역"
+                }
+            ],
+            "accommodation": {
+                "name": "엘리시아호텔",
+                "description": "깨끗하고 편안한 시설을 갖춘 호텔에서 여행의 피로를 풀 수 있습니다.",
+                "coords": "35.8011849671, 128.5335089281",
+                "estimated_cost": 50000,
+                "closest_subway": "현충로역"
+            }
+        },
+        {
+            "day": 2,
+            "places": [
+                {
+                    "name": "멜팅포레스트",
+                    "description": "감각적인 인테리어와 독특한 메뉴로 눈과 입이 즐거운 카페입니다.",
+                    "coords": "35.8121053889236, 128.531513882945",
+                    "estimated_cost": 12000,
+                    "closest_subway": "명덕역"
+                },
+                {
+                    "name": "쇼피스",
+                    "description": "예술적인 감각이 돋보이는 공간에서 특별한 커피 경험을 할 수 있습니다.",
+                    "coords": "35.8168900707916, 128.535788040943",
+                    "estimated_cost": 12000,
+                    "closest_subway": "반월당역"
+                },
+                {
+                    "name": "커피명가롯데",
+                    "description": "전통과 현대가 어우러진 공간에서 명품 커피의 진수를 맛보세요.",
+                    "coords": "35.8187971798462, 128.538867494036",
+                    "estimated_cost": 12000,
+                    "closest_subway": "반월당역"
+                }
+            ],
+            "accommodation": {
+                "name": "없음",
+                "description": "두 번째 날에는 숙박하지 않습니다.",
+                "coords": "0, 0",
+                "estimated_cost": 0,
+                "closest_subway": "없음"
+            }
+        }
+    ]
+}
