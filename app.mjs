@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import express from "express";
 import path from "path";
 import userRouter from "./router/user.mjs";
@@ -55,3 +56,15 @@ connectDB()
     console.log("db connected!");
   })
   .catch(console.error());
+=======
+import express from 'express';
+import { Server } from 'http';
+import cors from 'cors';
+
+const app = express();
+const server = new Server(app);
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+>>>>>>> Stashed changes
