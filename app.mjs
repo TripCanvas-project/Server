@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 import express from "express";
 import path from "path";
 import userRouter from "./router/user.mjs";
@@ -7,12 +6,37 @@ import connectDB from "./config/db.mjs";
 import "dotenv/config";
 import cors from "cors";
 import fs from "fs";
+import { Server } from "http";
 import { fileURLToPath } from "url";
 import planRoutes from "./router/plan.mjs";
 import routesRouter from "./router/route.mjs";
+import { setupSocktIO, getRoomStats } from "./sockets/index.mjs";
 
 const app = express();
+const server = createServer(app);
+
+// 미들웨어
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Socket.io 설정
+const io = new Server(server);
+
+// Socket 핸들러 설정
+setupSocktIO(io);
+
+// Heath check
+app.get("/health", (req, res) => {
+  const stats = getRoomStats();
+  res.json({
+    status: "ok",
+    // engine: Socket.io 엔진 객체, clientsCount: 현재 연결된 클라이언트 수
+    connections: io.engine.clientsCount,
+    ...stats
+  })
+})
+
 
 // ESM에서 __dirname 만들기
 const __filename = fileURLToPath(import.meta.url);
@@ -38,8 +62,6 @@ app.use(express.static(clientPublic));
 //   })
 // );
 
-app.use(cors({ origin: true, credentials: true }));
-
 // Router middleware
 app.use("/user", userRouter);
 app.use("/plan", planRoutes);
@@ -56,15 +78,3 @@ connectDB()
     console.log("db connected!");
   })
   .catch(console.error());
-=======
-import express from 'express';
-import { Server } from 'http';
-import cors from 'cors';
-
-const app = express();
-const server = new Server(app);
-
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
->>>>>>> Stashed changes
