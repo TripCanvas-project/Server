@@ -98,7 +98,6 @@ export const me = async (req, res) => {
                 message: "인증된 사용자가 아닙니다",
             });
         }
-
         return res.status(200).json({ user });
     } catch (error) {
         console.error("me error:", error);
