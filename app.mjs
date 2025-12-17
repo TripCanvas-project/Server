@@ -10,6 +10,7 @@ import { fileURLToPath } from "url";
 import planRoutes from "./router/plan.mjs";
 import routesRouter from "./router/route.mjs";
 import budgetRouter from "./router/budget.mjs";
+import scheduleRouter from "./router/schedule.mjs";
 
 const app = express();
 app.use(express.json());
@@ -45,6 +46,7 @@ app.use("/user", userRouter);
 app.use("/plan", planRoutes);
 app.use("/route", routesRouter);
 app.use("/budget", budgetRouter);
+app.use("/schedule", scheduleRouter);
 
 app.use((req, res, next) => {
   res.sendStatus(404); // no page
