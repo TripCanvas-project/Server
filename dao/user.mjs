@@ -34,26 +34,35 @@ export async function findById(userId) {
     return User.findById(userId).select("-password");
 }
 
-export async function updatePassword(newPw) {}
-
-export async function updateProfile(userId, nickname, email, bio, profileImg) {
-    // 만약에 이메일을 새로 수정했는데
-    // 다른 사람이 그 이메일을 쓰고 있을 경우 수정 안 되도록
-    const emailOwner = await User.findOne({ email });
-    if (emailOwner) return false;
-
-    const updatedUser = await User.findOneAndUpdate(
-        { _id: userId },
-        {
-            $set: {
-                nickname: nickname,
-                email: email,
-                bio: bio,
-                profileImg: profileImg,
-            },
-        },
+export const updatePassword = async (userId, hashedPassword) => {
+    return await User.findByIdAndUpdate(
+        userId,
+        { password: hashedPassword },
         { new: true }
     );
+};
 
-    return updatedUser;
-}
+export const updateProfile = async (
+    userId,
+    nickname,
+    email,
+    bio,
+    profileImg
+) => {
+    const updateFields = {
+        nickname,
+        email,
+        bio,
+    };
+
+    if (profileImg) {
+        updateFields.profileImg = profileImg;
+    }
+
+    return await User.findByIdAndUpdate(userId, updateFields, { new: true });
+};
+
+// 비밀번호 포함해서 유저 조회 (비번 변경용)
+export const findByIdWithPassword = async (userId) => {
+    return await User.findById(userId).select("+password");
+};

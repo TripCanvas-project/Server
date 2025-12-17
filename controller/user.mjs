@@ -111,34 +111,47 @@ export const me = async (req, res) => {
 // 비번 변경
 export const updatePw = async (req, res) => {
     try {
-        const { userId, newPassword } = req.body;
+        const userId = req.userId;
+        const { currentPassword, newPassword } = req.body;
 
-        // 일단 유저 정보가 존재하는지 확인
-        const userExist = userRepository.findById(userId);
-        if (!userExist) {
+        const user = await userRepository.findByIdWithPassword(userId);
+        if (!user) {
+            return res.status(401).json({ message: "사용자 없음" });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
             return res
                 .status(401)
-                .json({ message: "유저 ID가 존재하지 않습니다." });
+                .json({ message: "현재 비밀번호가 틀렸습니다" });
         }
-    } catch (error) {
-        return res.status(500).json({ message: "비밀번호 변경 중 오류 발생" });
+
+        const hashed = await bcrypt.hash(newPassword, BCRPYPT_SALT_ROUNDS);
+        await userRepository.updatePassword(userId, hashed);
+
+        res.status(200).json({ message: "비밀번호 변경 완료" });
+    } catch (e) {
+        res.status(500).json({ message: "비밀번호 변경 실패" });
     }
 };
 
 // 프로필 정보 변경
 export const updateProfile = async (req, res) => {
     try {
-        const { userId, nickname, email, bio, profileImg } = req.body;
+        const userId = req.userId;
+
+        const { nickname, email, bio } = req.body;
+
         const updatedUser = await userRepository.updateProfile(
             userId,
             nickname,
             email,
             bio,
-            profileImg
+            null // 이미지 변경 없음
         );
 
-        return res.status(201).json({
-            message: "프로필 설정 완료!",
+        return res.status(200).json({
+            message: "프로필 정보가 수정되었습니다.",
             user: {
                 id: updatedUser._id,
                 userid: updatedUser.userid,
@@ -149,8 +162,37 @@ export const updateProfile = async (req, res) => {
             },
         });
     } catch (error) {
+        console.error(error);
         res.status(500).json({
             message: "프로필 정보 수정 실패",
         });
+    }
+};
+
+// 프로필 이미지 업로드 및 변경
+export const uploadProfileImage = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "파일이 없습니다." });
+        }
+
+        const userId = req.userId;
+        const imageUrl = `/uploads/${req.file.filename}`;
+
+        const updatedUser = await userRepository.updateProfile(
+            userId,
+            null,
+            null,
+            null,
+            imageUrl
+        );
+
+        res.status(200).json({
+            message: "프로필 이미지가 변경되었습니다.",
+            profileImg: updatedUser.profileImg,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "이미지 업로드 실패" });
     }
 };

@@ -3,6 +3,7 @@ import * as userController from "../controller/user.mjs";
 import { body } from "express-validator";
 import { validate } from "../middleware/validator.mjs";
 import { isAuth } from "../middleware/auth.mjs";
+import upload from "../middleware/upload.mjs";
 
 const router = express.Router();
 
@@ -64,10 +65,15 @@ router.post("/login", validateLogin, userController.login);
 // 로그인 유지 확인
 router.post("/me", isAuth, userController.me);
 
-// 유저가 프로필 내용 변경 시 여기로
-router.put("/updtate_profile", isAuth, userController.updateProfile);
+// 프로필 정보 + 이미지 수정 (하나로 통합)
+router.put(
+    "/profile",
+    isAuth,
+    upload.single("profileImg"),
+    userController.updateProfile
+);
 
-// 비밀번호 변경
-// router.put('/update_pw', isAuth, userController.)
+// router/user.mjs
+router.put("/password", isAuth, userController.updatePw);
 
 export default router;
