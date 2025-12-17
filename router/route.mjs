@@ -279,7 +279,16 @@ router.post("/directions", isAuth, async (req, res) => {
       }
     }
 
-    return res.json({ points });
+    // ✅ 요약 거리/시간: summary가 있으면 사용, 없으면 sections 합산
+    const distanceM =
+      route0?.summary?.distance ??
+      (route0?.sections || []).reduce((sum, s) => sum + (s?.distance || 0), 0);
+
+    const durationS =
+      route0?.summary?.duration ??
+      (route0?.sections || []).reduce((sum, s) => sum + (s?.duration || 0), 0);
+
+    return res.json({ points, distanceM, durationS });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "directions 서버 오류" });
