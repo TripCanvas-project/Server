@@ -59,9 +59,6 @@ app.get("/", (req, res) => {
 app.use(express.static(clientPublic));
 
 // app.use(cors({ origin: true, credentials: true }));
-
-<<<<<<< HEAD
-=======
 app.use(
     cors({
         origin: "http://localhost:5500", // 프론트 주소
@@ -71,7 +68,6 @@ app.use(
     })
 );
 
->>>>>>> 51fd1b3460a16be360bd7b69a4ea060c9dde42c2
 // Router middleware
 app.use("/user", userRouter);
 app.use("/plan", planRoutes);
@@ -82,18 +78,9 @@ app.use((req, res, next) => {
 });
 
 connectDB()
-<<<<<<< HEAD
-  .then(() => {
-    app.listen(process.env.HOST_PORT);
-    console.log(`http://localhost:${process.env.HOST_PORT}/`);
-    console.log("db connected!");
-  })
-  .catch(console.error());
-=======
     .then(() => {
         app.listen(process.env.HOST_PORT);
         console.log(`http://localhost:${process.env.HOST_PORT}/`);
         console.log("db connected!");
     })
     .catch(console.error());
->>>>>>> 51fd1b3460a16be360bd7b69a4ea060c9dde42c2
