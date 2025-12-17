@@ -13,18 +13,12 @@ import { fileURLToPath } from "url";
 // Routes
 import planRoutes from "./router/plan.mjs";
 import routesRouter from "./router/route.mjs";
-<<<<<<< HEAD
 import { setupSocktIO, getRoomStats } from "./sockets/index.mjs";
 import tripRouter from "./router/trip.mjs";
 import budgetRouter from "./router/budget.mjs";
 import scheduleRouter from "./router/schedule.mjs";
 import memoRouter from "./router/memo.mjs";
 import chatRouter from "./router/chat.mjs";
-import scheduleRouter from "./router/schedule.mjs";
-import scheduleRouter from "./router/schedule.mjs";
-=======
-import budgetRouter from "./router/budget.mjs";
->>>>>>> f0dc7a5 (예산 server 추가)
 
 const app = express();
 const server = createServer(app);
