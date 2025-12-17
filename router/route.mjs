@@ -50,6 +50,37 @@ router.get("/latest", isAuth, async (req, res) => {
       })),
     };
 
+    let lastAcc = null;
+
+    const dailyPlansWithEffective = (routeWithCategory.dailyPlans || []).map(
+      (dp) => {
+        // dp.accommodation 이 이미 { placeId, category, ... } 형태라고 가정
+        // (없으면 null)
+        const hasAcc =
+          dp.accommodation &&
+          (dp.accommodation.placeId || typeof dp.accommodation === "string");
+
+        // accommodation을 placeId 기준으로 정규화
+        const normalizedAcc = !dp.accommodation
+          ? null
+          : typeof dp.accommodation === "string"
+          ? { placeId: dp.accommodation }
+          : dp.accommodation;
+
+        if (hasAcc && normalizedAcc?.placeId) {
+          lastAcc = normalizedAcc; // 이번 day 숙소가 있으면 갱신
+        }
+
+        return {
+          ...dp,
+          // ✅ 오늘 찍을 숙소(없으면 직전 숙소)
+          effectiveAccommodation: lastAcc ? { ...lastAcc } : null,
+        };
+      }
+    );
+
+    routeWithCategory.dailyPlans = dailyPlansWithEffective;
+
     return res.json({ route: routeWithCategory });
   } catch (err) {
     console.error(err);
