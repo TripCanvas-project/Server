@@ -121,7 +121,8 @@ router.get("/latest", isAuth, async (req, res) => {
     for (const dp of route.dailyPlans || []) {
       // places의 placeId
       for (const p of dp.places || []) {
-        const pid = normalizeId(p?.placeId);
+        // ✅ p가 string일 수도, {placeId:...}일 수도
+        const pid = normalizeId(p?.placeId ?? p);
         if (pid) idSet.add(String(pid));
       }
 
@@ -169,18 +170,30 @@ router.get("/latest", isAuth, async (req, res) => {
 
       // places
       const placesWithInfo = (dp.places || []).map((p) => {
-        const pid = normalizeId(p?.placeId);
+        const pid = normalizeId(p?.placeId ?? p);
         const doc = pid ? placeMap.get(String(pid)) : null;
 
-        return {
-          ...p,
+        const base =
+          typeof p === "string"
+            ? { placeId: String(p) }
+            : { ...p, placeId: String(pid || p.placeId || "") };
 
-          // 보강 필드들 (프론트에서 바로 쓰기 좋게)
-          category: doc?.category ?? p.category ?? null,
-          placeName: p.placeName || doc?.title || p.name || null,
-          addressFull: doc?.address?.full ?? p.addressFull ?? null,
+        return {
+          ...base,
+
+          // ✅ description은 Route에서만 (필드명 통일)
+          description:
+            (typeof p === "object" &&
+              (p.description ?? p.desc ?? p.overview ?? p.summary)) ??
+            null,
+
+          // ✅ category는 Place에서 보강
+          category: doc?.category ?? base.category ?? null,
+
+          placeName: base.placeName || doc?.title || base.name || null,
+          addressFull: doc?.address?.full ?? base.addressFull ?? null,
           coordinates:
-            toLatLng(doc?.coordinates) ?? toLatLng(p.coordinates) ?? null,
+            toLatLng(doc?.coordinates) ?? toLatLng(base.coordinates) ?? null,
         };
       });
 
