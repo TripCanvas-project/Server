@@ -19,7 +19,7 @@ export function setupMemoHandler(io, socket, rooms) {
         room.memos.push(newMemo);
 
         // 모든 참가자에게 브로드캐스트
-        is.to(roomId).emit('memo-created', newMemo);
+        io.to(roomId).emit('memo-created', newMemo);
         console.log(`Memo createdin room ${roomId} by ${socket.username}}`);
     })
 
