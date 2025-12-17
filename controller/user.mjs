@@ -98,7 +98,6 @@ export const me = async (req, res) => {
                 message: "인증된 사용자가 아닙니다",
             });
         }
-
         return res.status(200).json({ user });
     } catch (error) {
         console.error("me error:", error);
@@ -194,5 +193,16 @@ export const uploadProfileImage = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "이미지 업로드 실패" });
+    }
+};
+
+export const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        userRepository.deleteUser(id);
+        res.status(200).json({ message: "회원 탈퇴 성공" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "회원 탈퇴 실패" });
     }
 };

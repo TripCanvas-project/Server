@@ -66,3 +66,7 @@ export const updateProfile = async (
 export const findByIdWithPassword = async (userId) => {
     return await User.findById(userId).select("+password");
 };
+
+export const deleteUser = async (userId) => {
+    return await User.findByIdAndDelete(userId);
+};
