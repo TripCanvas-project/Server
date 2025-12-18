@@ -76,4 +76,6 @@ router.put(
 // router/user.mjs
 router.put("/password", isAuth, userController.updatePw);
 
+router.delete("/:id", isAuth, userController.deleteUser);
+
 export default router;
