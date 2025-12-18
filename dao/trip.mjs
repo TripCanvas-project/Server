@@ -22,6 +22,7 @@ export async function findTripsByUserIdAndStatus(userId, status) {
     }).lean();
 }
 
+// 어떤 user에 대한 trip counts select
 export async function countTripsByUserId(userId) {
     const objectId = new mongoose.Types.ObjectId(userId);
 
