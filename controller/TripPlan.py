@@ -350,7 +350,7 @@ def generate_travel_plan(user_info, places_data, accommodation_data):
             # ✅ 503 / UNAVAILABLE / overloaded -> 재시도
             msg = str(e)
             if ("503" in msg) or ("UNAVAILABLE" in msg) or ("overloaded" in msg):
-                delay = base_delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5)
+                base_delay = base_delay * (2 ** (attempt)) + random.uniform(0, 0.5)
                 print(
                     f"⚠️ Gemini 과부하(503) 재시도 {attempt}/{max_retries} - {delay:.1f}s 대기",
                     file=sys.stderr,
