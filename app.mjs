@@ -21,7 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Socket.io 설정
-const io = new Server(serve, {
+const io = new Server(server, {
   cors: {
     origin: "http://localhost:5500",
     credentials: true,
