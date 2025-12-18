@@ -21,7 +21,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Socket.io 설정
-const io = new Server(server);
+const io = new Server(serve, {
+  cors: {
+    origin: "http://localhost:5500",
+    credentials: true,
+  },
+});
 
 // Socket 핸들러 설정
 setupSocktIO(io);
@@ -79,7 +84,7 @@ app.use((req, res, next) => {
 
 connectDB()
     .then(() => {
-        app.listen(process.env.HOST_PORT);
+        server.listen(process.env.HOST_PORT);
         console.log(`http://localhost:${process.env.HOST_PORT}/`);
         console.log("db connected!");
     })
