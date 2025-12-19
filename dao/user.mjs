@@ -70,3 +70,9 @@ export const findByIdWithPassword = async (userId) => {
 export const deleteUser = async (userId) => {
     return await User.findByIdAndDelete(userId);
 };
+
+// export const findByIdWithBucketlists = async (userId) => {
+//     return await User.findById(userId)
+//         .populate("bucketlists")
+//         .select("nickname bucketlists");
+// };
