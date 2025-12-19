@@ -9,6 +9,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import planRoutes from "./router/plan.mjs";
 import routesRouter from "./router/route.mjs";
+import tripRouter from "./router/trip.mjs";
 
 const app = express();
 app.use(express.json());
@@ -48,6 +49,7 @@ app.use(
 app.use("/user", userRouter);
 app.use("/plan", planRoutes);
 app.use("/route", routesRouter);
+app.use("/trip", tripRouter);
 
 app.use((req, res, next) => {
     res.sendStatus(404); // no page
