@@ -10,11 +10,8 @@ import { Server } from "http";
 import { fileURLToPath } from "url";
 import planRoutes from "./router/plan.mjs";
 import routesRouter from "./router/route.mjs";
-<<<<<<< HEAD
 import { setupSocktIO, getRoomStats } from "./sockets/index.mjs";
-=======
 import tripRouter from "./router/trip.mjs";
->>>>>>> 5c96a7c75da53c6807d7bc9068357376362a1eee
 
 const app = express();
 const server = createServer(app);
