@@ -2,6 +2,7 @@ import express from "express";
 import { isAuth } from "../middleware/auth.mjs";
 import Trip from "../models/Trip.mjs";
 import * as tripController from "../controller/trip.mjs";
+const router = express.Router();
 
 // GET /trip/mine  - 로그인 유저의 Trip 목록
 router.get("/mine", isAuth, async (req, res) => {
