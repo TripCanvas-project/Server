@@ -40,10 +40,9 @@ app.get("/health", (req, res) => {
     status: "ok",
     // engine: Socket.io 엔진 객체, clientsCount: 현재 연결된 클라이언트 수
     connections: io.engine.clientsCount,
-    ...stats
-  })
-})
-
+    ...stats,
+  });
+});
 
 // 업로드된 파일(profileImg)을 제공하는 정적 파일 미들웨어
 app.use("/uploads", express.static("uploads"));
@@ -59,7 +58,7 @@ console.log("files:", fs.readdirSync(clientPublic));
 
 // 루트 접속 시 로그인 페이지로 이동
 app.get("/", (req, res) => {
-    res.sendFile(path.join(clientPublic, "login.html"));
+  res.sendFile(path.join(clientPublic, "login.html"));
 });
 
 // 정적 파일 서빙 (HTML/CSS/JS)
@@ -67,12 +66,12 @@ app.use(express.static(clientPublic));
 
 // app.use(cors({ origin: true, credentials: true }));
 app.use(
-    cors({
-        origin: "http://localhost:5500", // 프론트 주소
-        credentials: true,
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization"],
-    })
+  cors({
+    origin: "http://localhost:5500", // 프론트 주소
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
 );
 
 // Router middleware
@@ -82,13 +81,13 @@ app.use("/route", routesRouter);
 app.use("/trip", tripRouter);
 
 app.use((req, res, next) => {
-    res.sendStatus(404); // no page
+  res.sendStatus(404); // no page
 });
 
 connectDB()
-    .then(() => {
-        server.listen(process.env.HOST_PORT);
-        console.log(`http://localhost:${process.env.HOST_PORT}/`);
-        console.log("db connected!");
-    })
-    .catch(console.error());
+  .then(() => {
+    server.listen(process.env.HOST_PORT);
+    console.log(`http://localhost:${process.env.HOST_PORT}/`);
+    console.log("db connected!");
+  })
+  .catch(console.error());
