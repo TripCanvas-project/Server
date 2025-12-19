@@ -2,6 +2,7 @@ import express from "express";
 import { isAuth } from "../middleware/auth.mjs";
 import Trip from "../models/Trip.mjs";
 import * as tripController from "../controller/trip.mjs";
+const router = express.Router();
 
 const router = express.Router();
 
