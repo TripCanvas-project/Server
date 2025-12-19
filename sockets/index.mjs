@@ -67,7 +67,11 @@ export function setupSocktIO(io) {
 
     // 룸 나가기
     socket.on("leave-room", () => {
-      handle;
+      handleUserLeave(io, socket, rooms);
+
+      if (socket.userId) {
+        userSockets.delete(socket.userId);
+      }
     });
   });
 }
@@ -78,6 +82,41 @@ function handleUserLeave(io, socket, rooms) {
 
   const room = rooms.get(socket.roomId);
   if (room) {
+    // delete(): 맵에서 특정 키-값 쌍을 제거하는 메서드
     room.users.delete(socket.id);
+
+    // 다른 참가자들에게 알림
+    socket.to(socket.roomId).emit("user-left", {
+      socketId: socket.id,
+      username: socket.username,
+      users: Array.from(room.users.values()),
+    });
+
+    // 빈 룸 정리
+    if (room.users.size === 0) {
+      rooms.delete(socket.roomId);
+      console.log(`Room ${socket.roomId} deleted (empty)`);
+    } else {
+      console.log(
+        `User ${socket.username} left room ${socket.roomId} (${room.users.size} users remaining)`
+      );
+    }
   }
+  // leave(): 룸에서 사용자를 제거하는 메서드
+  socket.leave(socket.roomId);
+}
+
+// 룸 통계 조회 (Health Check용)
+export function getRoomStats() {
+  return {
+    totalRooms: rooms.size,
+    // entries(): Map 객체 내의 모든 요소(키-값 쌍)를 순서대로 포함하는 새로운 이터레이터(Iterator) 객체를 반환한다.
+    // map(): 배열의 각 요소에 대해 주어진 함수를 호출하고, 그 결과를 새로운 배열로 반환한다.
+    totalUsers: Array.from(rooms.entries()).map(([roomId, room]) => ({
+      roomId,
+      userCount: room.users.size,
+      memoCount: room.memos.length,
+      users: Array.from(room.users.values()).map((u) => u.username),
+    })),
+  };
 }
