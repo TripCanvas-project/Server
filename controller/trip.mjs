@@ -17,18 +17,18 @@ export async function getTripsForStatus(req, res) {
     }
 }
 
-export async function getMyBucketlists(req, res) {
+export async function getUserTripHistory(req, res) {
     try {
-        console.log("요청 받음!");
-        const userId = req.userId; // JWT 미들웨어에서 주입
+        const { userId } = req;
 
-        const user = await userRepository.findByIdWithBucketlists(userId);
+        const histories = await tripRepository.findTripHistoryByUserId(userId);
+        console.log("User Trip Histories:", histories);
 
-        res.status(201).json({
-            bucketlists: user.bucketlists,
-        });
+        res.status(200).json(histories);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "서버 에러" });
+        console.error("getUserTripHistory Error:", err);
+        res.status(500).json({
+            message: "여행 히스토리 조회에 실패했습니다",
+        });
     }
 }

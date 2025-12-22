@@ -15,8 +15,9 @@ router.get("/mine", isAuth, async (req, res) => {
     return res.json({ trips });
 });
 
-router.get("/", isAuth, tripController.getTripsForStatus);
+// user의 최근 여행 기록 조회
+router.get("/trip_history", isAuth, tripController.getUserTripHistory);
 
-router.get("/bucketlists", isAuth, tripController.getMyBucketlists);
+router.get("/", isAuth, tripController.getTripsForStatus);
 
 export default router;
