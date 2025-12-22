@@ -15,6 +15,9 @@ import planRoutes from "./router/plan.mjs";
 import routesRouter from "./router/route.mjs";
 import { setupSocktIO, getRoomStats } from "./sockets/index.mjs";
 import tripRouter from "./router/trip.mjs";
+import budgetRouter from "./router/budget.mjs";
+import scheduleRouter from "./router/schedule.mjs";
+
 
 const app = express();
 const server = createServer(app);
@@ -81,6 +84,9 @@ app.use("/user", userRouter);
 app.use("/plan", planRoutes);
 app.use("/route", routesRouter);
 app.use("/trip", tripRouter);
+app.use("/budget", budgetRouter);
+app.use("/schedule", scheduleRouter);
+
 
 app.use((req, res, next) => {
     res.sendStatus(404); // no page
