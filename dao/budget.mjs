@@ -16,3 +16,23 @@ export async function getMyExpenses(userId, tripId) {
   console.log(`   ✅ ${expenses.length}개의 지출 항목 조회됨`);
   return expenses;
 }
+
+// 지출 수정
+export async function updateExpense(expenseId, userId, updateData) {
+  console.log(`✏️ [DAO] 지출 수정 - expenseId: ${expenseId}, userId: ${userId}`);
+  const updated = await Budget.findOneAndUpdate(
+    { _id: expenseId, userId },
+    updateData,
+    { new: true }
+  );
+  console.log(`   ✅ 지출 수정 완료`);
+  return updated;
+}
+
+// 지출 삭제
+export async function deleteExpense(expenseId, userId) {
+  console.log(`🗑️ [DAO] 지출 삭제 - expenseId: ${expenseId}, userId: ${userId}`);
+  const deleted = await Budget.findOneAndDelete({ _id: expenseId, userId });
+  console.log(`   ✅ 지출 삭제 완료`);
+  return deleted;
+}

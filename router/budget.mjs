@@ -10,4 +10,10 @@ router.post("/", isAuth, budgetController.createExpense);
 // 내 지출만 조회
 router.get("/my/:tripId", isAuth, budgetController.getMyExpenses);
 
+// 지출 수정
+router.put("/:expenseId", isAuth, budgetController.updateExpense);
+
+// 지출 삭제
+router.delete("/:expenseId", isAuth, budgetController.deleteExpense);
+
 export default router;
