@@ -13,6 +13,30 @@ export async function findTripsByUserId(userId) {
         .lean();
 }
 
+export async function findByIdAndUserOrCollaborator(
+    tripId,
+    userId,
+    options = {}
+) {
+    if (!mongoose.Types.ObjectId.isValid(tripId)) return null;
+    if (!mongoose.Types.ObjectId.isValid(userId)) return null;
+
+    const query = Trip.findOne({
+        _id: tripId,
+        $or: [{ owner: userId }, { "collaborators.userId": userId }],
+    });
+
+    if (options.select) {
+        query.select(options.select);
+    }
+
+    if (options.populate) {
+        query.populate(options.populate);
+    }
+
+    return await query.exec();
+}
+
 export async function findTripsByUserIdAndStatus(userId, status) {
     const objectId = new mongoose.Types.ObjectId(userId);
 
@@ -92,4 +116,18 @@ function getCategoryIcon(category) {
         캠핑: "⛺",
     };
     return iconMap[category] || "🏖️";
+}
+
+export async function createTrip(ownerId) {
+    try {
+        const trip = await Trip.create({
+            title: "클릭하여 여행 타이틀 설정",
+            owner: ownerId,
+            // 나머지 필드는 스키마 default 값 사용
+        });
+        return trip;
+    } catch (err) {
+        console.error("tripDao.createTrip error:", err);
+        throw err;
+    }
 }

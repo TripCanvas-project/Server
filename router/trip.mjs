@@ -20,4 +20,6 @@ router.get("/trip_history", isAuth, tripController.getUserTripHistory);
 
 router.get("/", isAuth, tripController.getTripsForStatus);
 
+router.get("/create", isAuth, tripController.createTrip);
+
 export default router;
