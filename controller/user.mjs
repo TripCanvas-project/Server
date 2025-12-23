@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import * as userRepository from "../dao/user.mjs";
+import * as tripRepository from "../dao/trip.mjs";
 import {
     JWT_SECRET,
     JWT_EXPIRES_SEC,
@@ -206,3 +207,66 @@ export const deleteUser = async (req, res) => {
         res.status(500).json({ message: "회원 탈퇴 실패" });
     }
 };
+
+export async function getUserTripDesign(req, res) {
+    try {
+        const styles = await userRepository.getTripStyles(req.userId);
+        return res.status(200).json({ styles });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "스타일 조회 실패" });
+    }
+}
+
+export async function customizeTripTemplate(req, res) {
+    try {
+        const userId = req.userId;
+        const { tripId } = req.params;
+        const { emoji, color } = req.body;
+
+        console.log("tripId:", tripId, "emoji:", emoji, "color:", color);
+
+        // 필수 값 체크
+        if (!tripId) {
+            return res.status(400).json({ message: "tripId는 필수입니다." });
+        }
+
+        // 여행 존재 + 권한 확인 (owner or collaborator)
+        const trip = await tripRepository.findByIdAndUserOrCollaborator(
+            tripId,
+            userId
+        );
+
+        if (!trip) {
+            return res.status(403).json({
+                message: "해당 여행에 대한 권한이 없습니다.",
+            });
+        }
+
+        // 최소 1개 값 체크
+        if (!emoji && !color) {
+            return res.status(400).json({
+                message: "emoji 또는 color 중 하나는 필요합니다.",
+            });
+        }
+
+        // DAO 호출 (upsert)
+        const user = await userRepository.upsertUserTripStyle(userId, tripId, {
+            emoji,
+            color,
+        });
+
+        // 현재 trip 스타일만 반환
+        const savedStyle = user.userTripStyles?.get(tripId);
+
+        return res.status(200).json({
+            tripId,
+            style: savedStyle,
+        });
+    } catch (err) {
+        console.error("updateUserTripStyle error:", err);
+        return res.status(500).json({
+            message: "여행 카드 스타일 저장 실패",
+        });
+    }
+}
