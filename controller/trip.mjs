@@ -3,7 +3,7 @@ import * as userRepository from "../dao/user.mjs";
 
 export async function getTripsForStatus(req, res) {
     const { status } = req.query;
-    const userId = req.userId;
+    const userId = req.user.id;
 
     try {
         const trips = status
@@ -35,7 +35,7 @@ export async function getUserTripHistory(req, res) {
 
 export async function createTrip(req, res) {
     try {
-        const userId = req.userId; // 로그인한 사용자
+        const userId = req.user.id; // 로그인한 사용자
         console.log("create 요청 받음");
 
         const newTrip = await tripRepository.createTrip(userId);

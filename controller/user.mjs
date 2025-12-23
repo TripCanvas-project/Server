@@ -92,7 +92,7 @@ export const login = async (req, res) => {
 
 export const me = async (req, res) => {
     try {
-        const user = await userRepository.findById(req.userId);
+        const user = await userRepository.findById(req.user.id);
 
         if (!user) {
             return res.status(401).json({
@@ -111,7 +111,7 @@ export const me = async (req, res) => {
 // 비번 변경
 export const updatePw = async (req, res) => {
     try {
-        const userId = req.userId;
+        const userId = req.user.id;
         const { currentPassword, newPassword } = req.body;
 
         const user = await userRepository.findByIdWithPassword(userId);
@@ -138,7 +138,7 @@ export const updatePw = async (req, res) => {
 // 프로필 정보 변경
 export const updateProfile = async (req, res) => {
     try {
-        const userId = req.userId;
+        const userId = req.user.id;
 
         const { nickname, email, bio } = req.body;
 
@@ -176,7 +176,7 @@ export const uploadProfileImage = async (req, res) => {
             return res.status(400).json({ message: "파일이 없습니다." });
         }
 
-        const userId = req.userId;
+        const userId = req.user.id;
         const imageUrl = `/uploads/${req.file.filename}`;
 
         const updatedUser = await userRepository.updateProfile(
@@ -210,7 +210,7 @@ export const deleteUser = async (req, res) => {
 
 export async function getUserTripDesign(req, res) {
     try {
-        const styles = await userRepository.getTripStyles(req.userId);
+        const styles = await userRepository.getTripStyles(req.user.id);
         return res.status(200).json({ styles });
     } catch (err) {
         console.error(err);
@@ -220,7 +220,7 @@ export async function getUserTripDesign(req, res) {
 
 export async function customizeTripTemplate(req, res) {
     try {
-        const userId = req.userId;
+        const userId = req.user.id;
         const { tripId } = req.params;
         const { emoji, color } = req.body;
 

@@ -15,6 +15,7 @@ import planRoutes from "./router/plan.mjs";
 import routesRouter from "./router/route.mjs";
 import { setupSocktIO, getRoomStats } from "./sockets/index.mjs";
 import tripRouter from "./router/trip.mjs";
+import bucketRouter from "./router/bucket.mjs";
 
 const app = express();
 const server = createServer(app);
@@ -81,6 +82,7 @@ app.use("/user", userRouter);
 app.use("/plan", planRoutes);
 app.use("/route", routesRouter);
 app.use("/trip", tripRouter);
+app.use("/bucket", bucketRouter);
 
 app.use((req, res, next) => {
     res.sendStatus(404); // no page
