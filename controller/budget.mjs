@@ -1,6 +1,6 @@
 import * as budgetDao from "../dao/budget.mjs";
 import * as tripDao from "../dao/trip.mjs";
- 
+
 // 지출 추가
 export async function createExpense(req, res) {
   try {
@@ -24,7 +24,20 @@ export async function createExpense(req, res) {
     const { tripId, name, category, amount } = req.body; 
     const userId = req.user._id;
 
-    if (!tripId || !name || !category || !amount) {
+    // tripId가 없으면 사용자의 최근 여행을 자동으로 찾음
+    if (!tripId) {
+      const trips = await tripDao.findTripsByUserId(userId);
+      if (trips && trips.length > 0) {
+        tripId = trips[0]._id; // 가장 최근 여행
+        console.log(`🔍 tripId 자동 설정: ${tripId}`);
+      } else {
+        return res.status(400).json({
+          message: "여행 정보를 찾을 수 없습니다. 먼저 여행을 생성해주세요.",
+        });
+      }
+    }
+
+    if (!name || !category || !amount) {
       return res.status(400).json({
         message: "필수 항목을 모두 입력해주세요.",
       });
