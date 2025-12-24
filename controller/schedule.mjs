@@ -21,6 +21,10 @@ export async function createSchedule(req, res) {
     }
 
     if (!time || !title || !location) {
+    const { tripId, time, title, location } = req.body;
+    const userId = req.user._id;
+
+    if (!tripId || !time || !title || !location) {
       return res.status(400).json({
         message: "필수 항목을 모두 입력해주세요.",
       });
@@ -38,7 +42,8 @@ export async function createSchedule(req, res) {
       message: "일정이 추가되었습니다.",
       schedule,
     });
-  } catch (error) {
+  } 
+} catch (error) {
     console.error("일정 추가 오류:", error);
     res.status(500).json({
       message: "일정 추가 중 오류가 발생했습니다.",
