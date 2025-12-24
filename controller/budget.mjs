@@ -1,6 +1,6 @@
 import * as budgetDao from "../dao/budget.mjs";
 import * as tripDao from "../dao/trip.mjs";
-
+ 
 // 지출 추가
 export async function createExpense(req, res) {
   try {
@@ -21,6 +21,10 @@ export async function createExpense(req, res) {
     }
 
     if (!name || !category || !amount) {
+    const { tripId, name, category, amount } = req.body; 
+    const userId = req.user._id;
+
+    if (!tripId || !name || !category || !amount) {
       return res.status(400).json({
         message: "필수 항목을 모두 입력해주세요.",
       });
@@ -38,7 +42,8 @@ export async function createExpense(req, res) {
       message: "지출이 추가되었습니다.",
       expense,
     });
-  } catch (error) {
+  } 
+} catch (error) {
     console.error("지출 추가 오류:", error);
     res.status(500).json({
       message: "지출 추가 중 오류가 발생했습니다.",

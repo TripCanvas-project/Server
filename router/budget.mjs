@@ -1,6 +1,7 @@
 import express from "express";
 import * as budgetController from "../controller/budget.mjs";
 import { isAuth } from "../middleware/auth.mjs";
+import { authenticate } from "../middleware/auth.mjs";
 
 const router = express.Router();
 
