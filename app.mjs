@@ -19,6 +19,7 @@ import budgetRouter from "./router/budget.mjs";
 import scheduleRouter from "./router/schedule.mjs";
 import memoRouter from "./router/memo.mjs";
 import chatRouter from "./router/chat.mjs";
+import scheduleRouter from "./router/schedule.mjs";
 
 const app = express();
 const server = createServer(app);
@@ -89,13 +90,9 @@ app.use("/plan", planRoutes);
 app.use("/route", routesRouter);
 app.use("/trip", tripRouter);
 app.use("/budget", budgetRouter);
-<<<<<<< HEAD
 app.use("/schedule", scheduleRouter);
-
-=======
 app.use("/memo", memoRouter);
 app.use("/chat", chatRouter);
->>>>>>> ec69cd8 (merge 해결 및 코드 추가)
 
 app.use((req, res, next) => {
   res.sendStatus(404); // no page
