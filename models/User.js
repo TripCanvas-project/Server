@@ -63,6 +63,16 @@ const userSchema = new mongoose.Schema(
             ],
         },
 
+        userTripStyles: {
+            // trip template 디자인
+            type: Map,
+            of: {
+                emoji: String, // 이모지
+                color: String, // 배경 색상
+            },
+            default: {},
+        },
+
         stats: {
             totalTrips: { type: Number, default: 0 },
             completedTrips: { type: Number, default: 0 },
@@ -72,14 +82,10 @@ const userSchema = new mongoose.Schema(
         },
     },
     {
-        timestamps: true, // ✅ createdAt, updatedAt 자동 생성
+        timestamps: true,
     }
 );
 
-// [
-//   { _id: "xyz789", title: "부산 여행", owner: "abc123", ... },
-//   { _id: "def456", title: "제주 여행", owner: "abc123", ... }
-// ]
 userSchema.virtual("trips", {
     ref: "Trip", // 연결할 모델
     localField: "_id", // User의 어떤 필드를
@@ -92,4 +98,4 @@ userSchema.virtual("bucketlists", {
     foreignField: "userId",
 });
 
-export default mongoose.model("User", userSchema); // ⚠️ 이 줄 추가 필요!
+export default mongoose.model("User", userSchema);

@@ -71,6 +71,31 @@ export const deleteUser = async (userId) => {
     return await User.findByIdAndDelete(userId);
 };
 
+export async function getTripStyles(userId) {
+    const user = await User.findById(userId).select("userTripStyles");
+    if (!user) return {};
+
+    // Map이면 Object로 변환, 아니면 그대로 반환
+    if (user.userTripStyles instanceof Map) {
+        return Object.fromEntries(user.userTripStyles);
+    }
+    return user.userTripStyles || {};
+}
+
+export async function upsertUserTripStyle(userId, tripId, style) {
+    const update = {};
+
+    if (style.emoji !== undefined) {
+        update[`userTripStyles.${tripId}.emoji`] = style.emoji;
+    }
+
+    if (style.color !== undefined) {
+        update[`userTripStyles.${tripId}.color`] = style.color;
+    }
+
+    return User.findByIdAndUpdate(userId, { $set: update }, { new: true });
+}
+
 // export const findByIdWithBucketlists = async (userId) => {
 //     return await User.findById(userId)
 //         .populate("bucketlists")

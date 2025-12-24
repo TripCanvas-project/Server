@@ -78,4 +78,13 @@ router.put("/password", isAuth, userController.updatePw);
 
 router.delete("/:id", isAuth, userController.deleteUser);
 
+// 템플릿 이모지, 배경 색상 변경
+router.patch(
+    "/:tripId/customize",
+    isAuth,
+    userController.customizeTripTemplate
+);
+
+router.get("/trip_styles", isAuth, userController.getUserTripDesign);
+
 export default router;
