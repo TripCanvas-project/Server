@@ -1,41 +1,79 @@
+import mongoose from 'mongoose';
+
 const memoSchema = new mongoose.Schema({
+    // 여행 ID (String으로 변경 - 클라이언트 호환)
     tripId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Trip',
+        type: String,
         required: true,
         index: true
     },
     
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+    // 메모 고유 ID (UUID)
+    id: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    
+    // 생성자 (String으로 변경 - 클라이언트 호환)
+    createdBy: {
+        type: String,
         required: true
     },
     
+    // 메모 타입
     type: {
         type: String,
-        enum: ['text', 'drawing', 'photo', 'pen', 'highlight', 'shape'],
+        enum: ['path', 'text', 'drawing', 'photo', 'pen', 'highlight', 'shape'],
         required: true
     },
     
-    // 메모 내용
+    // 좌표 배열 (path, highlight용)
+    coords: [{
+        lat: Number,
+        lng: Number
+    }],
+    
+    // 텍스트 내용 (text용)
+    text: {
+        type: String,
+        default: ''
+    },
+    
+    // 스타일 정보
+    style: {
+        color: String,
+        width: Number,
+        opacity: Number,
+        fontSize: Number
+    },
+    
+    // 타임스탬프
+    timestamp: {
+        type: Number,
+        default: Date.now
+    },
+    
+    // ===== 기존 필드 유지 (하위 호환성) =====
+    
+    // 사용자 ID (ObjectId - 기존 호환)
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    
+    // 레거시 content 필드
     content: {
-        // type === 'text': { text: string, fontSize: number, color: string }
-        // type === 'drawing': { paths: [...], color: string, width: number }
-        // type === 'photo': { url: string, width: number, height: number }
-        // type === 'pen': { points: [...], color: string, width: number }
-        // type === 'highlight': { area: [...], color: string, opacity: number }
-        type: mongoose.Schema.Types.Mixed,
-        required: true
+        type: mongoose.Schema.Types.Mixed
     },
     
-    // 지도 상의 위치
+    // 단일 위치 (레거시)
     position: {
-        lat: {type: Number, required: true},
-        lng: {type: Number, required: true}
+        lat: Number,
+        lng: Number
     },
     
-    // 캔버스 레이어 위치 (픽셀 좌표)
+    // 캔버스 레이어 위치
     canvasPosition: {
         x: Number,
         y: Number,
@@ -43,13 +81,13 @@ const memoSchema = new mongoose.Schema({
         height: Number
     },
     
-    // 연결된 장소 (선택사항)
+    // 연결된 장소
     placeId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Place'
     },
     
-    // 레이어 순서 (z-index)
+    // 레이어 순서
     zIndex: {
         type: Number,
         default: 0
@@ -61,7 +99,7 @@ const memoSchema = new mongoose.Schema({
         default: true
     },
     
-    // 협업 정보
+    // 마지막 편집자
     lastEditedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
@@ -72,5 +110,10 @@ const memoSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// 특정 여행의 메모를 빠르게 조회하기 위한 인덱스
+// 인덱스
+memoSchema.index({ tripId: 1, timestamp: -1 });
 memoSchema.index({ tripId: 1, createdAt: -1 });
+
+const Memo = mongoose.model('Memo', memoSchema);
+
+export default Memo;
