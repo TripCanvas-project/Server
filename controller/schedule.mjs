@@ -23,7 +23,6 @@ export async function createSchedule(req, res) {
     if (!time || !title || !location) {
     const { tripId, time, title, location } = req.body;
     const userId = req.user._id;
-
     // tripId가 없으면 사용자의 최근 여행을 자동으로 찾음
     if (!tripId) {
       const trips = await tripDao.findTripsByUserId(userId);
