@@ -24,6 +24,9 @@ import scheduleRouter from "./router/schedule.mjs";
 import budgetRouter from "./router/budget.mjs";
 import scheduleRouter from "./router/schedule.mjs";
 import scheduleRouter from "./router/schedule.mjs";
+import scheduleRouter from "./router/schedule.mjs";
+import memoRouter from "./router/memo.mjs";
+import chatRouter from "./router/chat.mjs";
 
 const app = express();
 const server = createServer(app);
