@@ -2,7 +2,6 @@ import express from "express";
 import { isAuth } from "../middleware/auth.mjs";
 import Trip from "../models/Trip.mjs";
 import * as tripController from "../controller/trip.mjs";
-const router = express.Router();
 
 const router = express.Router();
 
@@ -40,5 +39,4 @@ router.get("/:tripId", isAuth, async (req, res) => {
         return res.status(500).json({ message: "여행 정보 조회 중 오류가 발생했습니다." });
     }
 });
-
 export default router;
