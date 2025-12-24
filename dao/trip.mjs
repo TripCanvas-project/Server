@@ -121,7 +121,7 @@ function getCategoryIcon(category) {
 export async function createTrip(ownerId) {
     try {
         const trip = await Trip.create({
-            title: "클릭하여 여행 타이틀 설정",
+            title: "클릭하여 여행 타이틀 설정", // 기본 trip name 자동 생성
             owner: ownerId,
             // 나머지 필드는 스키마 default 값 사용
         });
