@@ -39,4 +39,7 @@ router.get("/:tripId", isAuth, async (req, res) => {
         return res.status(500).json({ message: "여행 정보 조회 중 오류가 발생했습니다." });
     }
 });
+
+router.get("/create", isAuth, tripController.createTrip);
+
 export default router;
