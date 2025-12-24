@@ -20,6 +20,7 @@ import scheduleRouter from "./router/schedule.mjs";
 import memoRouter from "./router/memo.mjs";
 import chatRouter from "./router/chat.mjs";
 import scheduleRouter from "./router/schedule.mjs";
+import scheduleRouter from "./router/schedule.mjs";
 
 const app = express();
 const server = createServer(app);
