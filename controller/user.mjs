@@ -50,9 +50,11 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
     try {
-        const { userid, password } = req.body;
+        const { userid, email, password } = req.body;
 
-        const user = await userRepository.findByUseridWithPassword(userid);
+        const user = await userRepository.findByUseridWithPassword(
+            userid || email
+        );
 
         if (!user) {
             return res.status(401).json({
@@ -69,7 +71,7 @@ export const login = async (req, res) => {
         }
 
         const token = jwt.sign({ id: user._id }, JWT_SECRET, {
-            expiresIn: JWT_EXPIRES_SEC,
+            expiresIn: JWT_EXPIRES_SEC, // 48h
         });
 
         return res.status(200).json({

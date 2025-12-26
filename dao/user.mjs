@@ -10,8 +10,8 @@ export async function findByEmail(email) {
     return User.findOne({ email });
 }
 
-export async function findByUseridWithPassword(userid) {
-    return User.findOne({ userid }).select("+password");
+export async function findByUseridWithPassword(userid, email) {
+    return User.findOne({ $or: [{ userid }, { email }] }).select("+password");
 }
 
 export async function createUser({
