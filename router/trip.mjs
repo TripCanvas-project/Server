@@ -21,8 +21,6 @@ router.get("/trip_history", isAuth, tripController.getUserTripHistory);
 
 router.get("/", isAuth, tripController.getTripsForStatus);
 
-// router.get("/create", isAuth, tripController.createTrip);
-
 // GET /trip/:tripId - 특정 여행 정보 조회 (예산 정보 포함)
 router.get("/:tripId", isAuth, async (req, res) => {
   try {
@@ -43,5 +41,7 @@ router.get("/:tripId", isAuth, async (req, res) => {
       .json({ message: "여행 정보 조회 중 오류가 발생했습니다." });
   }
 });
+
+router.post("/", isAuth, tripController.createTrip);
 
 export default router;
