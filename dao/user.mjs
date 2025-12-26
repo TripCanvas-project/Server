@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import { updateTripTitle } from "../dao/trip.mjs";
 
 export async function findByUserid(userid) {
     return User.findOne({ userid });
@@ -82,7 +83,18 @@ export async function getTripStyles(userId) {
     return user.userTripStyles || {};
 }
 
-export async function upsertUserTripStyle(userId, tripId, style) {
+export async function updateTripDesign(userId, tripId, style = {}, title) {
+    let updatedStyle = null;
+
+    // Trip title 변경 (구성원들과 공유)
+    if (title !== undefined) {
+        const trip = await updateTripTitle(tripId, userId, title);
+        if (!trip) {
+            throw new Error("여행 제목 수정 권한 없음");
+        }
+    }
+
+    // User trip style 변경 (개인)
     const update = {};
 
     if (style.emoji !== undefined) {
@@ -93,7 +105,22 @@ export async function upsertUserTripStyle(userId, tripId, style) {
         update[`userTripStyles.${tripId}.color`] = style.color;
     }
 
-    return User.findByIdAndUpdate(userId, { $set: update }, { new: true });
+    if (Object.keys(update).length > 0) {
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { $set: update },
+            {
+                new: true,
+                select: "userTripStyles",
+            }
+        );
+
+        updatedStyle = user?.userTripStyles?.get(tripId) || null;
+    }
+
+    return {
+        updatedStyle,
+    };
 }
 
 // export const findByIdWithBucketlists = async (userId) => {

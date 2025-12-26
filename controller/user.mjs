@@ -222,9 +222,18 @@ export async function customizeTripTemplate(req, res) {
     try {
         const userId = req.user.id;
         const { tripId } = req.params;
-        const { emoji, color } = req.body;
+        const { emoji, color, title } = req.body;
 
-        console.log("tripId:", tripId, "emoji:", emoji, "color:", color);
+        console.log(
+            "tripId:",
+            tripId,
+            "emoji:",
+            emoji,
+            "color:",
+            color,
+            "title:",
+            title
+        );
 
         // 필수 값 체크
         if (!tripId) {
@@ -250,18 +259,21 @@ export async function customizeTripTemplate(req, res) {
             });
         }
 
-        // DAO 호출 (upsert)
-        const user = await userRepository.upsertUserTripStyle(userId, tripId, {
-            emoji,
-            color,
-        });
-
-        // 현재 trip 스타일만 반환
-        const savedStyle = user.userTripStyles?.get(tripId);
+        // DAO 호출
+        const { updatedStyle } = await userRepository.updateTripDesign(
+            userId,
+            tripId,
+            {
+                // style
+                emoji,
+                color,
+                title,
+            }
+        );
 
         return res.status(200).json({
             tripId,
-            style: savedStyle,
+            style: updatedStyle,
         });
     } catch (err) {
         console.error("updateUserTripStyle error:", err);

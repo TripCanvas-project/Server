@@ -13,7 +13,11 @@ export async function findTripsByUserId(userId) {
         .lean();
 }
 
-export async function findByIdAndUserOrCollaborator(tripId, userId, options = {}) {
+export async function findByIdAndUserOrCollaborator(
+    tripId,
+    userId,
+    options = {}
+) {
     if (!mongoose.Types.ObjectId.isValid(tripId)) return null;
     if (!mongoose.Types.ObjectId.isValid(userId)) return null;
 
@@ -42,6 +46,28 @@ export async function findTripsByUserIdAndStatus(userId, status) {
     }).lean();
 }
 
+// trip title 업데이트 (권한: owner or collaborator only)
+export async function updateTripTitle(tripId, userId, title) {
+    if (!tripId || !userId || !title) {
+        throw new Error("tripId, userId, title은 필수입니다.");
+    }
+
+    // 권한: owner 또는 collaborator
+    const trip = await Trip.findOne({
+        _id: tripId,
+        $or: [{ owner: userId }, { collaborators: userId }],
+    });
+
+    if (!trip) {
+        return null; // 권한 없음
+    }
+
+    trip.title = title;
+    await trip.save();
+
+    return trip;
+}
+
 // 어떤 user에 대한 trip counts select
 export async function countTripsByUserId(userId) {
     const objectId = new mongoose.Types.ObjectId(userId);
@@ -49,7 +75,10 @@ export async function countTripsByUserId(userId) {
     return await Trip.aggregate([
         {
             $match: {
-                $or: [{ owner: objectId }, { "collaborators.userId": objectId }],
+                $or: [
+                    { owner: objectId },
+                    { "collaborators.userId": objectId },
+                ],
             },
         },
         {
@@ -74,9 +103,13 @@ export async function findTripHistoryByUserId(userId, limit = 10) {
             title: trip.title,
             startDate: trip.startDate,
             endDate: trip.endDate,
-            dateRange: `${formatDate(trip.startDate)} - ${formatDate(trip.endDate)}`,
+            dateRange: `${formatDate(trip.startDate)} - ${formatDate(
+                trip.endDate
+            )}`,
             totalBudget: trip.constraints?.budget?.total || 0,
-            budgetDisplay: `₩${(trip.constraints?.budget?.total || 0).toLocaleString("ko-KR")}`,
+            budgetDisplay: `₩${(
+                trip.constraints?.budget?.total || 0
+            ).toLocaleString("ko-KR")}`,
             category: trip.categories?.[0] || "etc",
             placesDisplay: `${trip.places?.length || 0}개 장소`,
         }));
@@ -107,25 +140,25 @@ function getCategoryIcon(category) {
     return iconMap[category] || "🏖️";
 }
 
-export async function createTrip(ownerId, tripData = {}) {
-    try {
-        const trip = await Trip.create({
-            title: "클릭하여 여행 타이틀 설정", // 기본 trip name 자동 생성
-            owner: ownerId,
-            destination: tripData.destination || {
-                name: "미정",
-                district: "미정",
-                city: "미정",
-            },
-            startDate: tripData.startDate,
-            endDate: tripData.endDate,
-            duration: tripData.duration || 2,
-            status: tripData.status || "planning",
-            // 나머지 필드는 스키마 default 값 사용
-        });
-        return trip;
-    } catch (err) {
-        console.error("tripDao.createTrip error:", err);
-        throw err;
-    }
-}
+// export async function createTrip(ownerId, tripData = {}) {
+//     try {
+//         const trip = await Trip.create({
+//             title: "클릭하여 여행 타이틀 설정", // 기본 trip name 자동 생성
+//             owner: ownerId,
+//             destination: tripData.destination || {
+//                 name: "미정",
+//                 district: "미정",
+//                 city: "미정",
+//             },
+//             startDate: tripData.startDate,
+//             endDate: tripData.endDate,
+//             duration: tripData.duration || 2,
+//             status: tripData.status || "planning",
+//             // 나머지 필드는 스키마 default 값 사용
+//         });
+//         return trip;
+//     } catch (err) {
+//         console.error("tripDao.createTrip error:", err);
+//         throw err;
+//     }
+// }
