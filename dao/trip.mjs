@@ -134,25 +134,39 @@ function getCategoryIcon(category) {
     return iconMap[category] || "🏖️";
 }
 
-// export async function createTrip(ownerId, tripData = {}) {
-//     try {
-//         const trip = await Trip.create({
-//             title: "클릭하여 여행 타이틀 설정", // 기본 trip name 자동 생성
-//             owner: ownerId,
-//             destination: tripData.destination || {
-//                 name: "미정",
-//                 district: "미정",
-//                 city: "미정",
-//             },
-//             startDate: tripData.startDate,
-//             endDate: tripData.endDate,
-//             duration: tripData.duration || 2,
-//             status: tripData.status || "planning",
-//             // 나머지 필드는 스키마 default 값 사용
-//         });
-//         return trip;
-//     } catch (err) {
-//         console.error("tripDao.createTrip error:", err);
-//         throw err;
-//     }
-// }
+export async function createTrip(ownerId, tripData = {}) {
+    try {
+        const trip = await Trip.create({
+            title: "클릭하여 여행 타이틀 설정",
+            owner: ownerId,
+            destination: tripData.destination || {
+                name: "미정",
+                district: "미정",
+                city: "미정",
+            },
+            startDate: tripData.startDate,
+            endDate: tripData.endDate,
+            duration: tripData.duration || 2,
+            status: tripData.status || "planning",
+            // 나머지 필드는 스키마 default 값 사용
+        });
+        return trip;
+    } catch (err) {
+        console.error("tripDao.createTrip error:", err);
+        throw err;
+    }
+}
+
+export async function updateTrip(tripId, ownerId, updateData) {
+    try {
+        const trip = await Trip.findOneAndUpdate(
+            { _id: tripId, owner: ownerId},
+            { $set: updateData},
+            { new: true, runValidators: true}
+        );
+        return trip;
+    } catch (err) {
+        console.error("tripDao.updateTrip error:", err);
+        throw err;
+    }
+}

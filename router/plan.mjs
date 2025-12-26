@@ -23,6 +23,15 @@ router.post("/generate", isAuth, async (req, res) => {
     try {
         // ✅ isAuth에서 넣어준 userId 사용
         const userId = req.userId;
+        const { tripId } = req.body;
+
+        let trip;
+        if (tripId) {
+            trip = await Trip.findOne({ _id: tripId, owner: userId });
+            if (!trip) {
+                return res.status(404).json({ message: "여행 정보를 찾을 수 없습니다" });
+            }
+        }
 
         if (!userId) {
             return res
@@ -115,49 +124,95 @@ router.post("/generate", isAuth, async (req, res) => {
                 /* ===============================
            2️⃣ Trip 생성
         =============================== */
-                const trip = await Trip.create({
-                    title: aiResult.title,
-                    description: aiResult.description,
-                    owner: userId,
+                if (trip){
+                    trip.title = aiResult.title;
+                    trip.description = aiResult.description;
 
-                    startDate: new Date(req.body.start_date),
-                    endDate: new Date(req.body.end_date),
-                    duration:
+                    trip.startDate = new Date(req.body.start_date);
+                    trip.endDate = new Date(req.body.end_date);
+                    trip.duration =
                         (new Date(req.body.end_date) -
                             new Date(req.body.start_date)) /
                             (1000 * 60 * 60 * 24) +
-                        1,
+                        1;
 
-                    origin: {
+                    trip.origin = {
                         inputText: req.body.start_loc,
-                    },
+                    };
 
-                    destination: {
+                    trip.destination = {
                         city: req.body.end_area,
                         district: req.body.detail_addr || "",
                         name: `${req.body.end_area} ${
                             req.body.detail_addr || ""
                         }`.trim(),
-                    },
+                    };
 
-                    categories: req.body.place_themes
+                    trip.categories = req.body.place_themes
                         ? req.body.place_themes
                               .split(",")
                               .map((t) => t.trim())
                               .filter(Boolean)
-                        : [],
+                        : [];
 
-                    peopleCount: req.body.total_people,
+                    trip.peopleCount = req.body.total_people;
 
-                    constraints: {
+                    trip.constraints = {
                         budget: {
                             perPerson: req.body.budget_per_person,
                             total:
                                 req.body.budget_per_person *
                                 req.body.total_people,
                         },
-                    },
-                });
+                    };
+
+                    trip.status = 'active';
+                    await trip.save();
+                } else {
+                    trip = await Trip.create({
+                        title: aiResult.title,
+                        description: aiResult.description,
+                        owner: userId,
+
+                        startDate: new Date(req.body.start_date),
+                        endDate: new Date(req.body.end_date),
+                        duration:
+                            (new Date(req.body.end_date) -
+                                new Date(req.body.start_date)) /
+                                (1000 * 60 * 60 * 24) +
+                            1,
+
+                        origin: {
+                            inputText: req.body.start_loc,
+                        },
+
+                        destination: {
+                            city: req.body.end_area,
+                            district: req.body.detail_addr || "",
+                            name: `${req.body.end_area} ${
+                                req.body.detail_addr || ""
+                            }`.trim(),
+                        },
+
+                        categories: req.body.place_themes
+                            ? req.body.place_themes
+                                .split(",")
+                                .map((t) => t.trim())
+                                .filter(Boolean)
+                            : [],
+
+                        peopleCount: req.body.total_people,
+
+                        constraints: {
+                            budget: {
+                                perPerson: req.body.budget_per_person,
+                                total:
+                                    req.body.budget_per_person *
+                                    req.body.total_people,
+                            },
+                        },
+                    })
+                };
 
                 /* ===============================
            3️⃣ Place 미리 조회 (선택)
