@@ -16,6 +16,10 @@ import routesRouter from "./router/route.mjs";
 import { setupSocktIO, getRoomStats } from "./sockets/index.mjs";
 import tripRouter from "./router/trip.mjs";
 import bucketRouter from "./router/bucket.mjs";
+import budgetRouter from "./router/budget.mjs";
+import scheduleRouter from "./router/schedule.mjs";
+import memoRouter from "./router/memo.mjs";
+import chatRouter from "./router/chat.mjs";
 
 const app = express();
 const server = createServer(app);
@@ -70,7 +74,10 @@ app.use(express.static(clientPublic));
 // app.use(cors({ origin: true, credentials: true }));
 app.use(
     cors({
-        origin: "http://localhost:5500", // 프론트 주소
+        origin: [
+            "http://localhost:5500",
+            "https://sunlike-diametrically-marta.ngrok-free.dev",
+        ], // 프론트 주소
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],
@@ -83,6 +90,10 @@ app.use("/plan", planRoutes);
 app.use("/route", routesRouter);
 app.use("/trip", tripRouter);
 app.use("/bucket", bucketRouter);
+app.use("/budget", budgetRouter);
+app.use("/schedule", scheduleRouter);
+app.use("/memo", memoRouter);
+app.use("/chat", chatRouter);
 
 app.use((req, res, next) => {
     res.sendStatus(404); // no page

@@ -35,12 +35,20 @@ export async function getUserTripHistory(req, res) {
 
 export async function createTrip(req, res) {
     try {
-        const userId = req.user.id; // 로그인한 사용자
+        const userId = req.userId; // 로그인한 사용자
+        const { title, destination, startDate, endDate, status } = req.body;
+
         console.log("create 요청 받음");
 
-        const newTrip = await tripRepository.createTrip(userId);
+        const newTrip = await tripRepository.createTrip(userId, {
+            title,
+            destination,
+            startDate,
+            endDate,
+            status,
+        });
         console.log("Created New Trip:", newTrip);
-        res.status(201).json({ newTrip });
+        res.status(201).json(newTrip);
     } catch (err) {
         console.error("createTrip error:", err);
         res.status(500).json({ message: "새 여행 생성 실패" });

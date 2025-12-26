@@ -13,11 +13,7 @@ export async function findTripsByUserId(userId) {
         .lean();
 }
 
-export async function findByIdAndUserOrCollaborator(
-    tripId,
-    userId,
-    options = {}
-) {
+export async function findByIdAndUserOrCollaborator(tripId, userId, options = {}) {
     if (!mongoose.Types.ObjectId.isValid(tripId)) return null;
     if (!mongoose.Types.ObjectId.isValid(userId)) return null;
 
@@ -53,10 +49,7 @@ export async function countTripsByUserId(userId) {
     return await Trip.aggregate([
         {
             $match: {
-                $or: [
-                    { owner: objectId },
-                    { "collaborators.userId": objectId },
-                ],
+                $or: [{ owner: objectId }, { "collaborators.userId": objectId }],
             },
         },
         {
@@ -81,13 +74,9 @@ export async function findTripHistoryByUserId(userId, limit = 10) {
             title: trip.title,
             startDate: trip.startDate,
             endDate: trip.endDate,
-            dateRange: `${formatDate(trip.startDate)} - ${formatDate(
-                trip.endDate
-            )}`,
+            dateRange: `${formatDate(trip.startDate)} - ${formatDate(trip.endDate)}`,
             totalBudget: trip.constraints?.budget?.total || 0,
-            budgetDisplay: `₩${(
-                trip.constraints?.budget?.total || 0
-            ).toLocaleString("ko-KR")}`,
+            budgetDisplay: `₩${(trip.constraints?.budget?.total || 0).toLocaleString("ko-KR")}`,
             category: trip.categories?.[0] || "etc",
             placesDisplay: `${trip.places?.length || 0}개 장소`,
         }));
@@ -118,11 +107,20 @@ function getCategoryIcon(category) {
     return iconMap[category] || "🏖️";
 }
 
-export async function createTrip(ownerId) {
+export async function createTrip(ownerId, tripData = {}) {
     try {
         const trip = await Trip.create({
             title: "클릭하여 여행 타이틀 설정", // 기본 trip name 자동 생성
             owner: ownerId,
+            destination: tripData.destination || {
+                name: "미정",
+                district: "미정",
+                city: "미정",
+            },
+            startDate: tripData.startDate,
+            endDate: tripData.endDate,
+            duration: tripData.duration || 2,
+            status: tripData.status || "planning",
             // 나머지 필드는 스키마 default 값 사용
         });
         return trip;
