@@ -48,24 +48,18 @@ export async function findTripsByUserIdAndStatus(userId, status) {
 
 // trip title 업데이트 (권한: owner or collaborator only)
 export async function updateTripTitle(tripId, userId, title) {
-    if (!tripId || !userId || !title) {
-        throw new Error("tripId, userId, title은 필수입니다.");
-    }
-
-    // 권한: owner 또는 collaborator
-    const trip = await Trip.findOne({
-        _id: tripId,
-        $or: [{ owner: userId }, { collaborators: userId }],
-    });
+    const trip = await Trip.findOneAndUpdate(
+        {
+            _id: tripId,
+            $or: [{ owner: userId }, { collaborators: userId }],
+        },
+        { $set: { title } },
+        { new: true }
+    );
 
     if (!trip) {
-        return null; // 권한 없음
+        throw new Error("여행 제목 변경 권한이 없습니다.");
     }
-
-    trip.title = title;
-    await trip.save();
-
-    return trip;
 }
 
 // 어떤 user에 대한 trip counts select

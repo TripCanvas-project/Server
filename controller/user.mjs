@@ -224,17 +224,6 @@ export async function customizeTripTemplate(req, res) {
         const { tripId } = req.params;
         const { emoji, color, title } = req.body;
 
-        console.log(
-            "tripId:",
-            tripId,
-            "emoji:",
-            emoji,
-            "color:",
-            color,
-            "title:",
-            title
-        );
-
         // 필수 값 체크
         if (!tripId) {
             return res.status(400).json({ message: "tripId는 필수입니다." });
@@ -253,30 +242,28 @@ export async function customizeTripTemplate(req, res) {
         }
 
         // 최소 1개 값 체크
-        if (!emoji && !color) {
+        if (!emoji && !color && title === undefined) {
             return res.status(400).json({
-                message: "emoji 또는 color 중 하나는 필요합니다.",
+                message: "emoji 또는 color 또는 title 중 하나는 필요합니다.",
             });
         }
 
         // DAO 호출
-        const { updatedStyle } = await userRepository.updateTripDesign(
-            userId,
-            tripId,
-            {
+        const { updatedTitle, updatedStyle } =
+            await userRepository.updateTripDesign(userId, tripId, {
                 // style
                 emoji,
                 color,
                 title,
-            }
-        );
+            });
 
         return res.status(200).json({
-            tripId,
-            style: updatedStyle,
+            updatedTitle,
+            updatedStyle, // { emoji, color }
+            message: "여행 카드 스타일이 저장되었습니다.",
         });
     } catch (err) {
-        console.error("updateUserTripStyle error:", err);
+        console.error("customizeTripTemplate error:", err);
         return res.status(500).json({
             message: "여행 카드 스타일 저장 실패",
         });

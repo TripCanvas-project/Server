@@ -1,5 +1,6 @@
 import User from "../models/User.js";
-import { updateTripTitle } from "../dao/trip.mjs";
+import { updateTripTitle } from "./trip.mjs";
+import mongoose from "mongoose";
 
 export async function findByUserid(userid) {
     return User.findOne({ userid });
@@ -83,48 +84,38 @@ export async function getTripStyles(userId) {
     return user.userTripStyles || {};
 }
 
-export async function updateTripDesign(userId, tripId, style = {}, title) {
-    let updatedStyle = null;
-
-    // Trip title 변경 (구성원들과 공유)
-    if (title !== undefined) {
-        const trip = await updateTripTitle(tripId, userId, title);
-        if (!trip) {
-            throw new Error("여행 제목 수정 권한 없음");
-        }
-    }
-
-    // User trip style 변경 (개인)
+export async function updateTripDesign(userId, tripId, style) {
     const update = {};
 
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const tripObjectId = new mongoose.Types.ObjectId(tripId);
+
+    // 1. Trip title (구성원들과 공유)
+    if (style.title !== undefined) {
+        await updateTripTitle(tripObjectId, userObjectId, style.title);
+    }
+
+    // 2. User 개인 스타일
     if (style.emoji !== undefined) {
-        update[`userTripStyles.${tripId}.emoji`] = style.emoji;
+        update[`userTripStyles.${tripObjectId}.emoji`] = style.emoji;
     }
 
     if (style.color !== undefined) {
-        update[`userTripStyles.${tripId}.color`] = style.color;
+        update[`userTripStyles.${tripObjectId}.color`] = style.color;
     }
 
+    // 3. 개인 스타일 변경이 있을 때만 User 업데이트
+    let user = null;
     if (Object.keys(update).length > 0) {
-        const user = await User.findByIdAndUpdate(
+        user = await User.findByIdAndUpdate(
             userId,
             { $set: update },
-            {
-                new: true,
-                select: "userTripStyles",
-            }
+            { new: true, projection: { userTripStyles: 1 } }
         );
-
-        updatedStyle = user?.userTripStyles?.get(tripId) || null;
     }
 
     return {
-        updatedStyle,
+        updatedTitle: style.title ?? undefined,
+        userTripStyles: user?.userTripStyles?.[tripObjectId],
     };
 }
-
-// export const findByIdWithBucketlists = async (userId) => {
-//     return await User.findById(userId)
-//         .populate("bucketlists")
-//         .select("nickname bucketlists");
-// };

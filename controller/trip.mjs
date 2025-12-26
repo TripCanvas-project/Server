@@ -22,7 +22,6 @@ export async function getUserTripHistory(req, res) {
         const { userId } = req;
 
         const histories = await tripRepository.findTripHistoryByUserId(userId);
-        console.log("User Trip Histories:", histories);
 
         res.status(200).json(histories);
     } catch (err) {
