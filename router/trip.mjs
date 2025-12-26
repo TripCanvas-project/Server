@@ -40,6 +40,6 @@ router.get("/:tripId", isAuth, async (req, res) => {
     }
 });
 
-router.get("/create", isAuth, tripController.createTrip);
+router.post("/", isAuth, tripController.createTrip);
 
 export default router;
