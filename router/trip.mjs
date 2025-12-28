@@ -50,7 +50,7 @@ router.post("/", tripController.createTrip);
 router.post("/:tripId/invite-link", tripController.inviteCollaborator);
 
 // 초대 링크로 참여
-router.post("/:tripId/invite/join", tripController.joinTripByInvite);
+router.post("/:tripId/invite/:inviteToken", tripController.joinTripByInvite);
 
 router.put("/:tripId", tripController.updateTrip);
 

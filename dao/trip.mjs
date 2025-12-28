@@ -186,6 +186,7 @@ export async function createTripInvite(tripId, expireDays = 7) {
     const token = crypto.randomBytes(16).toString("hex");
     const expiresAt = new Date(Date.now() + expireDays * 24 * 60 * 60 * 1000);
 
+    // Trip의 invite 필드 업데이트
     const trip = await Trip.findByIdAndUpdate(
         tripId,
         {
@@ -205,7 +206,7 @@ export async function createTripInvite(tripId, expireDays = 7) {
     }
 
     return {
-        token,
+        inviteToken: token,
         expiresAt,
     };
 }

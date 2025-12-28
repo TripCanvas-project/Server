@@ -85,8 +85,7 @@ export const updateTrip = async (req, res) => {
 
 export async function inviteCollaborator(req, res) {
     try {
-        const { tripId } = req.body;
-        const userId = req.user.id;
+        const { tripId } = req.params;
 
         // 여행 조회
         const trip = await tripRepository.findById(tripId);
@@ -98,25 +97,28 @@ export async function inviteCollaborator(req, res) {
         }
 
         // 권한 체크 (owner 또는 editor)
-        const hasPermission =
-            trip.owner.toString() === userId ||
-            trip.collaborators.some(
-                (c) =>
-                    c.userId.toString() === userId &&
-                    ["owner", "editor"].includes(c.role)
-            );
+        // const hasPermission =
+        //     trip.owner.toString() === userId ||
+        //     trip.collaborators.some(
+        //         (c) =>
+        //             c.userId.toString() === userId &&
+        //             ["owner", "editor"].includes(c.role)
+        //     );
 
-        if (!hasPermission) {
-            return res.status(403).json({ message: "초대 권한이 없습니다." });
-        }
+        // if (!hasPermission) {
+        //     return res.status(403).json({ message: "초대 권한이 없습니다." });
+        // }
 
         // 초대 토큰 생성 (DAO)
-        const { token, expiresAt } = await tripRepository.createTripInvite(
-            tripId
-        );
+        const { inviteToken, expiresAt } =
+            await tripRepository.createTripInvite(tripId);
+
+        console.log("Generated Invite Token:", inviteToken);
 
         // 초대 링크 생성
-        const inviteLink = `${FRONT_URL}/invite/${token}`;
+        const inviteLink = `http://localhost:8080/invite/${inviteToken}`;
+
+        console.log("Generated Invite Link:", inviteLink);
 
         return res.status(200).json({
             message: "초대 링크가 생성되었습니다.",
@@ -131,12 +133,11 @@ export async function inviteCollaborator(req, res) {
 
 export async function joinTripByInvite(req, res) {
     try {
-        const { token } = req.body;
+        const { inviteToken } = req.params;
         const userId = req.user.id;
 
         // 토큰으로 여행 조회
-        const trip = await tripRepository.findTripByInviteToken(token);
-
+        const trip = await tripRepository.findTripByInviteToken(inviteToken);
         if (!trip) {
             return res.status(400).json({ message: "유효하지 않은 초대 링크" });
         }
@@ -145,6 +146,7 @@ export async function joinTripByInvite(req, res) {
             return res.status(400).json({ message: "만료된 초대 링크" });
         }
 
+        // 이미 참여한 사용자인지 확인
         const alreadyJoined = trip.collaborators.some(
             (c) => c.userId.toString() === userId
         );
