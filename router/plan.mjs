@@ -54,7 +54,7 @@ router.post("/generate", isAuth, async (req, res) => {
             fs.readdirSync(path.join(PROJECT_ROOT, "controller"))
         );
 
-        const py = spawn("python", [pythonScriptPath], {
+        const py = spawn("python3", [pythonScriptPath], {
             env: { ...process.env, PYTHONIOENCODING: "utf-8" },
         });
 
