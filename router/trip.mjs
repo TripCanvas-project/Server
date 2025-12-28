@@ -17,12 +17,12 @@ router.get("/mine", isAuth, async (req, res) => {
 });
 
 // user의 최근 여행 기록 조회
-router.get("/trip_history", isAuth, tripController.getUserTripHistory);
+router.get("/trip_history", tripController.getUserTripHistory);
 
 router.get("/", isAuth, tripController.getTripsForStatus);
 
 // GET /trip/:tripId - 특정 여행 정보 조회 (예산 정보 포함)
-router.get("/:tripId", isAuth, async (req, res) => {
+router.get("/:tripId", async (req, res) => {
     try {
         const { tripId } = req.params;
         const userId = req.user?.id;
@@ -44,14 +44,14 @@ router.get("/:tripId", isAuth, async (req, res) => {
     }
 });
 
-router.post("/", isAuth, tripController.createTrip);
+router.post("/", tripController.createTrip);
 
 // 초대 링크 생성
-router.post("/:tripId/invite-link", isAuth, tripController.inviteCollaborator);
+router.post("/:tripId/invite-link", tripController.inviteCollaborator);
 
 // 초대 링크로 참여
-router.post("/:tripId/invite/join", isAuth, tripController.joinTripByInvite);
+router.post("/:tripId/invite/join", tripController.joinTripByInvite);
 
-router.put("/:tripId", isAuth, tripController.updateTrip);
+router.put("/:tripId", tripController.updateTrip);
 
 export default router;
