@@ -1,5 +1,6 @@
 import Trip from "../models/Trip.mjs";
 import mongoose from "mongoose";
+import crypto from "crypto";
 
 export async function findTripsByUserId(userId) {
     const objectId = new mongoose.Types.ObjectId(userId);
@@ -8,6 +9,15 @@ export async function findTripsByUserId(userId) {
         $or: [{ owner: objectId }, { "collaborators.userId": objectId }],
     })
         .sort({ createdAt: -1 })
+        .populate("owner", "nickname email")
+        .populate("collaborators.userId", "nickname email")
+        .lean();
+}
+
+export async function findById(tripId) {
+    if (!mongoose.Types.ObjectId.isValid(tripId)) return null;
+
+    return await Trip.findById(tripId)
         .populate("owner", "nickname email")
         .populate("collaborators.userId", "nickname email")
         .lean();
@@ -160,13 +170,79 @@ export async function createTrip(ownerId, tripData = {}) {
 export async function updateTrip(tripId, ownerId, updateData) {
     try {
         const trip = await Trip.findOneAndUpdate(
-            { _id: tripId, owner: ownerId},
-            { $set: updateData},
-            { new: true, runValidators: true}
+            { _id: tripId, owner: ownerId },
+            { $set: updateData },
+            { new: true, runValidators: true }
         );
         return trip;
     } catch (err) {
         console.error("tripDao.updateTrip error:", err);
         throw err;
+    }
+}
+
+export async function createTripInvite(tripId, expireDays = 7) {
+    // 랜덤 토큰 생성
+    const token = crypto.randomBytes(16).toString("hex");
+    const expiresAt = new Date(Date.now() + expireDays * 24 * 60 * 60 * 1000);
+
+    const trip = await Trip.findByIdAndUpdate(
+        tripId,
+        {
+            invite: {
+                token,
+                expiresAt,
+            },
+        },
+        {
+            new: true,
+            runValidators: true,
+        }
+    );
+
+    if (!trip) {
+        throw new Error("Trip not found");
+    }
+
+    return {
+        token,
+        expiresAt,
+    };
+}
+
+// 초대 토큰으로 Trip 찾기
+export async function findTripByInviteToken(token) {
+    return await Trip.findOne({
+        "invite.token": token,
+    });
+}
+
+// 초대 정보 삭제
+export async function clearTripInvite(tripId) {
+    await Trip.findByIdAndUpdate(tripId, {
+        $unset: { invite: "" },
+    });
+}
+
+export async function addCollaborator(tripId, collaboratorId) {
+    const result = await Trip.updateOne(
+        {
+            _id: tripId,
+            "collaborators.userId": { $ne: collaboratorId },
+        },
+        {
+            $push: {
+                collaborators: {
+                    userId: collaboratorId,
+                    role: "viewer",
+                    joinedAt: new Date(),
+                },
+            },
+            $inc: { peopleCount: 1 },
+        }
+    );
+
+    if (result.modifiedCount === 0) {
+        throw new Error("이미 참여한 사용자입니다.");
     }
 }

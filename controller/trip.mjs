@@ -1,5 +1,6 @@
 import * as tripRepository from "../dao/trip.mjs";
 import * as userRepository from "../dao/user.mjs";
+import crypto from "crypto";
 
 export async function getTripsForStatus(req, res) {
     const { status } = req.query;
@@ -60,18 +61,103 @@ export const updateTrip = async (req, res) => {
         const userId = req.userId;
         const updateData = req.body;
 
-        const trip = await tripRepository.updateTrip(tripId, userId, updateData);
+        const trip = await tripRepository.updateTrip(
+            tripId,
+            userId,
+            updateData
+        );
 
         if (!trip) {
-            return res.status(404).json({ message: '여행을 찾을 수 없습니다.'})
+            return res
+                .status(404)
+                .json({ message: "여행을 찾을 수 없습니다." });
         }
 
         return res.json({ trip });
     } catch (error) {
-        console.error('Trip update error:', error);
+        console.error("Trip update error:", error);
         return res.status(500).json({
-            message: '여행 업데이트 중 오류가 발생했습니다.',
-            error: error.message
-        })
+            message: "여행 업데이트 중 오류가 발생했습니다.",
+            error: error.message,
+        });
+    }
+};
+
+export async function inviteCollaborator(req, res) {
+    try {
+        const { tripId } = req.body;
+        const userId = req.user.id;
+
+        // 여행 조회
+        const trip = await tripRepository.findById(tripId);
+
+        if (!trip) {
+            return res
+                .status(404)
+                .json({ message: "여행을 찾을 수 없습니다." });
+        }
+
+        // 권한 체크 (owner 또는 editor)
+        const hasPermission =
+            trip.owner.toString() === userId ||
+            trip.collaborators.some(
+                (c) =>
+                    c.userId.toString() === userId &&
+                    ["owner", "editor"].includes(c.role)
+            );
+
+        if (!hasPermission) {
+            return res.status(403).json({ message: "초대 권한이 없습니다." });
+        }
+
+        // 초대 토큰 생성 (DAO)
+        const { token, expiresAt } = await tripRepository.createTripInvite(
+            tripId
+        );
+
+        // 초대 링크 생성
+        const inviteLink = `${FRONT_URL}/invite/${token}`;
+
+        return res.status(200).json({
+            message: "초대 링크가 생성되었습니다.",
+            inviteLink,
+            expiresAt,
+        });
+    } catch (error) {
+        console.error("inviteCollaborator(초대 링크 생성) 에러:", error);
+        return res.status(500).json({ message: "서버 오류" });
+    }
+}
+
+export async function joinTripByInvite(req, res) {
+    try {
+        const { token } = req.body;
+        const userId = req.user.id;
+
+        // 토큰으로 여행 조회
+        const trip = await tripRepository.findTripByInviteToken(token);
+
+        if (!trip) {
+            return res.status(400).json({ message: "유효하지 않은 초대 링크" });
+        }
+
+        if (!trip.invite?.expiresAt || trip.invite.expiresAt < new Date()) {
+            return res.status(400).json({ message: "만료된 초대 링크" });
+        }
+
+        const alreadyJoined = trip.collaborators.some(
+            (c) => c.userId.toString() === userId
+        );
+
+        if (alreadyJoined) {
+            return res.status(200).json({ message: "이미 참여한 여행입니다." });
+        }
+
+        await tripRepository.addCollaborator(trip._id, userId);
+
+        return res.status(200).json({ message: "여행에 참여했습니다." });
+    } catch (error) {
+        console.error("joinTripByInvite 에러:", error);
+        return res.status(500).json({ message: "서버 오류" });
     }
 }
