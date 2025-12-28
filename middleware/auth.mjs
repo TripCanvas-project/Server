@@ -13,10 +13,10 @@ export const isAuth = (req, res, next) => {
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
 
-        req.userId = decoded.id;
-        req.user = { _id: decoded.id };
+        // req.userId = decoded.id;
+        req.user = { id: decoded.id };
 
-        if (!req.userId) {
+        if (!req.user.id) {
             return res
                 .status(401)
                 .json({ message: "토큰에 사용자 정보가 없습니다" });

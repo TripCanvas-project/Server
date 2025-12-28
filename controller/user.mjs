@@ -50,9 +50,11 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
     try {
-        const { userid, password } = req.body;
+        const { userid, email, password } = req.body;
 
-        const user = await userRepository.findByUseridWithPassword(userid);
+        const user = await userRepository.findByUseridWithPassword(
+            userid || email
+        );
 
         if (!user) {
             return res.status(401).json({
@@ -69,7 +71,7 @@ export const login = async (req, res) => {
         }
 
         const token = jwt.sign({ id: user._id }, JWT_SECRET, {
-            expiresIn: JWT_EXPIRES_SEC,
+            expiresIn: JWT_EXPIRES_SEC, // 48h
         });
 
         return res.status(200).json({
@@ -92,7 +94,7 @@ export const login = async (req, res) => {
 
 export const me = async (req, res) => {
     try {
-        const user = await userRepository.findById(req.userId);
+        const user = await userRepository.findById(req.user.id);
 
         if (!user) {
             return res.status(401).json({
@@ -111,7 +113,7 @@ export const me = async (req, res) => {
 // 비번 변경
 export const updatePw = async (req, res) => {
     try {
-        const userId = req.userId;
+        const userId = req.user.id;
         const { currentPassword, newPassword } = req.body;
 
         const user = await userRepository.findByIdWithPassword(userId);
@@ -138,7 +140,7 @@ export const updatePw = async (req, res) => {
 // 프로필 정보 변경
 export const updateProfile = async (req, res) => {
     try {
-        const userId = req.userId;
+        const userId = req.user.id;
 
         const { nickname, email, bio } = req.body;
 
@@ -176,7 +178,7 @@ export const uploadProfileImage = async (req, res) => {
             return res.status(400).json({ message: "파일이 없습니다." });
         }
 
-        const userId = req.userId;
+        const userId = req.user.id;
         const imageUrl = `/uploads/${req.file.filename}`;
 
         const updatedUser = await userRepository.updateProfile(
@@ -210,7 +212,7 @@ export const deleteUser = async (req, res) => {
 
 export async function getUserTripDesign(req, res) {
     try {
-        const styles = await userRepository.getTripStyles(req.userId);
+        const styles = await userRepository.getTripStyles(req.user.id);
         return res.status(200).json({ styles });
     } catch (err) {
         console.error(err);
@@ -220,11 +222,9 @@ export async function getUserTripDesign(req, res) {
 
 export async function customizeTripTemplate(req, res) {
     try {
-        const userId = req.userId;
+        const userId = req.user.id;
         const { tripId } = req.params;
-        const { emoji, color } = req.body;
-
-        console.log("tripId:", tripId, "emoji:", emoji, "color:", color);
+        const { emoji, color, title } = req.body;
 
         // 필수 값 체크
         if (!tripId) {
@@ -244,27 +244,28 @@ export async function customizeTripTemplate(req, res) {
         }
 
         // 최소 1개 값 체크
-        if (!emoji && !color) {
+        if (!emoji && !color && title === undefined) {
             return res.status(400).json({
-                message: "emoji 또는 color 중 하나는 필요합니다.",
+                message: "emoji 또는 color 또는 title 중 하나는 필요합니다.",
             });
         }
 
-        // DAO 호출 (upsert)
-        const user = await userRepository.upsertUserTripStyle(userId, tripId, {
-            emoji,
-            color,
-        });
-
-        // 현재 trip 스타일만 반환
-        const savedStyle = user.userTripStyles?.get(tripId);
+        // DAO 호출
+        const { updatedTitle, updatedStyle } =
+            await userRepository.updateTripDesign(userId, tripId, {
+                // style
+                emoji,
+                color,
+                title,
+            });
 
         return res.status(200).json({
-            tripId,
-            style: savedStyle,
+            updatedTitle,
+            updatedStyle, // { emoji, color }
+            message: "여행 카드 스타일이 저장되었습니다.",
         });
     } catch (err) {
-        console.error("updateUserTripStyle error:", err);
+        console.error("customizeTripTemplate error:", err);
         return res.status(500).json({
             message: "여행 카드 스타일 저장 실패",
         });

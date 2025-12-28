@@ -3,7 +3,7 @@ import * as userRepository from "../dao/user.mjs";
 
 export async function getTripsForStatus(req, res) {
     const { status } = req.query;
-    const userId = req.userId;
+    const userId = req.user.id;
 
     try {
         const trips = status
@@ -22,7 +22,6 @@ export async function getUserTripHistory(req, res) {
         const { userId } = req;
 
         const histories = await tripRepository.findTripHistoryByUserId(userId);
-        console.log("User Trip Histories:", histories);
 
         res.status(200).json(histories);
     } catch (err) {
@@ -52,5 +51,27 @@ export async function createTrip(req, res) {
     } catch (err) {
         console.error("createTrip error:", err);
         res.status(500).json({ message: "새 여행 생성 실패" });
+    }
+}
+
+export const updateTrip = async (req, res) => {
+    try {
+        const { tripId } = req.params;
+        const userId = req.userId;
+        const updateData = req.body;
+
+        const trip = await tripRepository.updateTrip(tripId, userId, updateData);
+
+        if (!trip) {
+            return res.status(404).json({ message: '여행을 찾을 수 없습니다.'})
+        }
+
+        return res.json({ trip });
+    } catch (error) {
+        console.error('Trip update error:', error);
+        return res.status(500).json({
+            message: '여행 업데이트 중 오류가 발생했습니다.',
+            error: error.message
+        })
     }
 }

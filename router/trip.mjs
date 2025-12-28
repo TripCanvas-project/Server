@@ -44,4 +44,6 @@ router.get("/:tripId", isAuth, async (req, res) => {
 
 router.post("/", isAuth, tripController.createTrip);
 
+router.put("/:tripId", isAuth, tripController.updateTrip);
+
 export default router;
