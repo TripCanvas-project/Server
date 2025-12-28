@@ -7,7 +7,7 @@ const router = express.Router();
 
 // GET /trip/mine  - 로그인 유저의 Trip 목록
 router.get("/mine", isAuth, async (req, res) => {
-  const userId = req.userId;
+  const userId = req.user?.id;
   const trips = await Trip.find({ owner: userId })
     .sort({ createdAt: -1, _id: -1 })
     .select("title description startDate endDate createdAt")
@@ -25,7 +25,7 @@ router.get("/", isAuth, tripController.getTripsForStatus);
 router.get("/:tripId", isAuth, async (req, res) => {
   try {
     const { tripId } = req.params;
-    const userId = req.userId;
+    const userId = req.user?.id;
 
     const trip = await Trip.findOne({ _id: tripId, owner: userId }).lean();
 

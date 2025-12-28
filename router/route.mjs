@@ -156,7 +156,7 @@ async function enrichRoute(route) {
  */
 router.get("/latest", isAuth, async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.id;
 
     const trips = await Trip.find({ owner: userId }).select("_id").lean();
     const tripIds = trips.map((t) => t._id);
@@ -250,7 +250,7 @@ router.post("/directions", isAuth, async (req, res) => {
  */
 router.get("/by-trip/:tripId", isAuth, async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.id;
     const { tripId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(tripId)) {
