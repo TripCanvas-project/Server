@@ -5,7 +5,7 @@ import * as tripDao from "../dao/trip.mjs";
 export async function createExpense(req, res) {
   try {
     let { tripId, name, category, amount } = req.body;
-    const userId = req.user._id;
+    const userId = req.user.id;
 
     // tripId가 없으면 사용자의 최근 여행을 자동으로 찾음
     if (!tripId) {
@@ -50,7 +50,7 @@ export async function createExpense(req, res) {
 export async function getMyExpenses(req, res) {
   try {
     const { tripId } = req.params;
-    const userId = req.user._id;
+    const userId = req.user.id;
 
     const expenses = await budgetDao.getMyExpenses(userId, tripId);
 
@@ -70,7 +70,7 @@ export async function getMyExpenses(req, res) {
 export async function updateExpense(req, res) {
   try {
     const { expenseId } = req.params;
-    const userId = req.user._id;
+    const userId = req.user.id;
     const { name, category, amount } = req.body;
 
     if (!name || !category || !amount) {
@@ -109,7 +109,7 @@ export async function updateExpense(req, res) {
 export async function deleteExpense(req, res) {
   try {
     const { expenseId } = req.params;
-    const userId = req.user._id;
+    const userId = req.user.id;
 
     const deleted = await budgetDao.deleteExpense(expenseId, userId);
 
