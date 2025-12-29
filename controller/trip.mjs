@@ -1,6 +1,8 @@
 import * as tripRepository from "../dao/trip.mjs";
 import * as userRepository from "../dao/user.mjs";
 import crypto from "crypto";
+import { PUBLIC_BASE_URL } from "../config/public_url.mjs";
+import { HOST_URL } from "../config/host.mjs";
 
 export async function getTripsForStatus(req, res) {
     const { status } = req.query;
@@ -115,8 +117,8 @@ export async function inviteCollaborator(req, res) {
 
         console.log("Generated Invite Token:", inviteToken);
 
-        // 초대 링크 생성
-        const inviteLink = `http://localhost:8080/invite/${inviteToken}`;
+        // 초대 링크 생성 (ngrok dev server url 사용)
+        const inviteLink = `${PUBLIC_BASE_URL}/trip/join/${inviteToken}`;
 
         console.log("Generated Invite Link:", inviteLink);
 
@@ -132,34 +134,35 @@ export async function inviteCollaborator(req, res) {
 }
 
 export async function joinTripByInvite(req, res) {
+    const { inviteToken } = req.params;
+    const userId = req.user.id;
+
+    console.log("joinTripByInvite called with token:", inviteToken);
+    console.log("joinedUserId:", userId);
+
+    // 로그인 안 된 경우
+    if (!userId) {
+        return res.redirect(`${HOST_URL}/login.html?invite=${inviteToken}`);
+    }
+
     try {
-        const { inviteToken } = req.params;
-        const userId = req.user.id;
-
-        // 토큰으로 여행 조회
         const trip = await tripRepository.findTripByInviteToken(inviteToken);
-        if (!trip) {
-            return res.status(400).json({ message: "유효하지 않은 초대 링크" });
-        }
+        if (!trip) return res.send("유효하지 않은 초대 링크입니다.");
+        if (trip.invite.expiresAt < new Date())
+            return res.send("만료된 초대 링크입니다.");
 
-        if (!trip.invite?.expiresAt || trip.invite.expiresAt < new Date()) {
-            return res.status(400).json({ message: "만료된 초대 링크" });
-        }
-
-        // 이미 참여한 사용자인지 확인
-        const alreadyJoined = trip.collaborators.some(
+        const already = trip.collaborators.some(
             (c) => c.userId.toString() === userId
         );
 
-        if (alreadyJoined) {
-            return res.status(200).json({ message: "이미 참여한 여행입니다." });
+        if (!already) {
+            await tripRepository.addCollaborator(trip._id, userId);
         }
 
-        await tripRepository.addCollaborator(trip._id, userId);
-
-        return res.status(200).json({ message: "여행에 참여했습니다." });
-    } catch (error) {
-        console.error("joinTripByInvite 에러:", error);
-        return res.status(500).json({ message: "서버 오류" });
+        const tripId = trip._id.toString(); // param으로 넘기기 위해 문자열로 변환
+        return res.redirect(`${HOST_URL}/main.html/${tripId}`);
+    } catch (e) {
+        console.error("joinTripByInvite error:", e);
+        return res.redirect(`${HOST_URL}/login.html?invite=${inviteToken}`);
     }
 }

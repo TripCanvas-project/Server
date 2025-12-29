@@ -47,10 +47,14 @@ router.get("/:tripId", async (req, res) => {
 router.post("/", tripController.createTrip);
 
 // 초대 링크 생성
-router.post("/:tripId/invite-link", tripController.inviteCollaborator);
+router.post("/:tripId/invite-link", isAuth, tripController.inviteCollaborator);
 
-// 초대 링크로 참여
-router.post("/:tripId/invite/:inviteToken", tripController.joinTripByInvite);
+// 초대 링크로 참여 (tripId, inviteToken)
+router.get("/join/:inviteToken", (req, res) => {
+    res.redirect(`/invite-bridge.html?invite=${req.params.inviteToken}`);
+});
+
+router.post("/join/:inviteToken", isAuth, tripController.joinTripByInvite);
 
 router.put("/:tripId", tripController.updateTrip);
 
