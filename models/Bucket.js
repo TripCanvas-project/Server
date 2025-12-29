@@ -1,5 +1,20 @@
 import mongoose from "mongoose";
 
+const BucketItemSchema = new mongoose.Schema(
+  {
+    text: {
+      type: String,
+      trim: true,
+      maxlength: 300,
+    },
+    done: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { _id: true }
+);
+
 const BucketlistSchema = new mongoose.Schema(
   {
     userId: {
@@ -13,33 +28,61 @@ const BucketlistSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: [50, "챌린지 이름은 50자 이하여야 합니다"],
+      maxlength: [50, "챌린지 이름은 50자 이하이어야 합니다."],
+    },
+
+    title: {
+      type: String,
+      trim: true,
+      maxlength: [100, "제목은 100자 이하이어야 합니다."],
     },
 
     description: {
       type: String,
-      maxlength: [500, "챌린지 설명은 500자 이하여야 합니다"],
+      maxlength: [500, "챌린지 설명은 500자 이하이어야 합니다."],
     },
 
-    // 아이콘 추가
+    // 아이콘/테마
     icon: {
       type: String,
       default: "🎯",
     },
 
+    theme: {
+      type: String,
+      default: "",
+    },
+
+    items: {
+      type: [BucketItemSchema],
+      default: [],
+    },
+
     category: {
       type: String,
-      enum: ["cafe", "food", "history", "nature", "culture", "camping"],
-      required: true,
+      enum: ["general", "cafe", "food", "history", "nature", "culture", "camping"],
+      default: "general",
     },
 
     target: {
       type: Number,
-      required: true,
-      min: 1,
+      default: 0,
+      min: 0,
+    },
+
+    targetCount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
 
     current: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    completedCount: {
       type: Number,
       default: 0,
       min: 0,
@@ -93,15 +136,19 @@ const BucketlistSchema = new mongoose.Schema(
   }
 );
 
-// Virtual: 진행률 (퍼센트)
+// Virtual: 진행률(퍼센트)
 BucketlistSchema.virtual("progress").get(function () {
-  if (this.target === 0) return 0;
-  return Math.round((this.current / this.target) * 100);
+  const targetTotal = this.targetCount || this.target || 0;
+  if (targetTotal === 0) return 0;
+  const completedTotal = this.completedCount || this.current || 0;
+  return Math.round((completedTotal / targetTotal) * 100);
 });
 
 // Virtual: 진행률 텍스트
 BucketlistSchema.virtual("progressText").get(function () {
-  return `${this.current} / ${this.target}`;
+  const targetTotal = this.targetCount || this.target || 0;
+  const completedTotal = this.completedCount || this.current || 0;
+  return `${completedTotal} / ${targetTotal}`;
 });
 
 // Virtual: 참여자 수

@@ -3,7 +3,16 @@ import * as bucketController from "../controller/bucket.mjs";
 import { isAuth } from "../middleware/auth.mjs";
 
 const router = express.Router();
-// 특정 user의 최근 추가한 bucketlist 4개 조회
-router.get("/", isAuth, bucketController.getUserBuckets);
+
+// 인증 미들웨어 공통 적용
+router.use(isAuth);
+
+// 버킷리스트 CRUD + 아이템 토글
+router.get("/", bucketController.getUserBuckets);
+router.post("/", bucketController.createBucket);
+router.get("/:id", bucketController.getBucketById);
+router.post("/:id/items", bucketController.addItemToBucket);
+router.patch("/:id/items/:itemId", bucketController.updateBucketItem);
+router.delete("/:id", bucketController.deleteBucket);
 
 export default router;
