@@ -7,7 +7,7 @@ export async function findByUserid(userid) {
 }
 
 export async function findByEmail(email) {
-    return User.findOne({ email });
+    return User.findOne({ email }).select("-password");
 }
 
 export async function findByUseridWithPassword(userid, email) {
