@@ -419,6 +419,9 @@ if __name__ == "__main__":
                         json.dump(travel_plan_json, f, ensure_ascii=False, indent=4)
                 except Exception as e:
                     log(f"\n파일 저장 중 오류가 발생했습니다: {e}")
+
+                sys.stdout.flush()
+                sys.exit(0)
             else:
                 log("\n여행 계획 생성에 실패했습니다.")
                 sys.exit(1)
