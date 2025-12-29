@@ -34,23 +34,23 @@ app.use(express.urlencoded({ extended: true }));
 // localStorage 기반 JWT는 redirect가 안되기 때문에
 // 초대 링크 기능은 session 없이 구현 자체가 불가능해서 session 적용
 app.use(
-    session({
-        secret: SESSION_SECRET,
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            sameSite: "lax",
-            secure: false, // https 배포 시 true
-        },
-    })
+  session({
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      sameSite: "lax",
+      secure: false, // https 배포 시 true
+    },
+  })
 );
 
 // Socket.io 설정
 const io = new Server(server, {
-    cors: {
-        origin: "http://localhost:5500",
-        credentials: true,
-    },
+  cors: {
+    origin: "http://localhost:5500",
+    credentials: true,
+  },
 });
 
 // Socket 핸들러 설정
@@ -58,13 +58,13 @@ setupSocktIO(io);
 
 // Heath check
 app.get("/health", (req, res) => {
-    const stats = getRoomStats();
-    res.json({
-        status: "ok",
-        // engine: Socket.io 엔진 객체, clientsCount: 현재 연결된 클라이언트 수
-        connections: io.engine.clientsCount,
-        ...stats,
-    });
+  const stats = getRoomStats();
+  res.json({
+    status: "ok",
+    // engine: Socket.io 엔진 객체, clientsCount: 현재 연결된 클라이언트 수
+    connections: io.engine.clientsCount,
+    ...stats,
+  });
 });
 
 // 업로드된 파일(profileImg)을 제공하는 정적 파일 미들웨어
@@ -81,7 +81,7 @@ console.log("files:", fs.readdirSync(clientPublic));
 
 // 루트 접속 시 로그인 페이지로 이동
 app.get("/", (req, res) => {
-    res.sendFile(path.join(clientPublic, "login.html"));
+  res.sendFile(path.join(clientPublic, "login.html"));
 });
 
 // 정적 파일 서빙 (HTML/CSS/JS)
@@ -89,27 +89,27 @@ app.use(express.static(clientPublic));
 
 // app.use(cors({ origin: true, credentials: true }));
 app.use(
-    cors({
-        origin: [
-            "http://localhost:5500",
-            "https://ferly-coxcombic-elroy.ngrok-free.dev",
-        ], // 프론트 주소
-        credentials: true,
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization"],
-    })
+  cors({
+    origin: [
+      "http://localhost:5500",
+      "https://sunlike-diametrically-marta.ngrok-free.dev",
+    ], // 프론트 주소
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
 );
 
 app.use(
-    session({
-        secret: process.env.SESSION_SECRET,
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            sameSite: "lax",
-            secure: false,
-        },
-    })
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      sameSite: "lax",
+      secure: false,
+    },
+  })
 );
 
 // Router middleware
@@ -124,13 +124,13 @@ app.use("/memo", memoRouter);
 app.use("/chat", chatRouter);
 
 app.use((req, res, next) => {
-    res.sendStatus(404); // no page
+  res.sendStatus(404); // no page
 });
 
 connectDB()
-    .then(() => {
-        server.listen(process.env.HOST_PORT);
-        console.log(`http://localhost:${process.env.HOST_PORT}/`);
-        console.log("db connected!");
-    })
-    .catch(console.error());
+  .then(() => {
+    server.listen(process.env.HOST_PORT);
+    console.log(`http://localhost:${process.env.HOST_PORT}/`);
+    console.log("db connected!");
+  })
+  .catch(console.error());
