@@ -33,7 +33,16 @@ export async function createUser({
 }
 
 export async function findById(userId) {
-    return User.findById(userId).select("-password");
+    return User.findById(userId)
+        .select("-password")
+        .populate({
+            path: 'trips',
+            select: 'status'  // status만 필요
+        })
+        .populate({
+            path: 'bucketlists',
+            select: 'isCompleted'  // isCompleted만 필요
+        });
 }
 
 export const updatePassword = async (userId, hashedPassword) => {
