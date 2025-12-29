@@ -46,4 +46,6 @@ router.post("/", isAuth, tripController.createTrip);
 
 router.put("/:tripId", isAuth, tripController.updateTrip);
 
+router.delete("/:tripId", isAuth, tripController.deleteTrip);
+
 export default router;

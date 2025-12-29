@@ -170,3 +170,18 @@ export async function updateTrip(tripId, ownerId, updateData) {
         throw err;
     }
 }
+
+export async function deleteTrip(tripId, ownerId) {
+    try {
+        const trip = await Trip.findOneAndDelete({ _id: tripId, owner: ownerId });
+
+        if (!trip) {
+            throw new Error("여행을 찾을 수 없습니다.");
+        }
+
+        return trip;
+    } catch (err) {
+        console.error("tripDao.deleteTrip error:", err);
+        throw err;
+    }
+}

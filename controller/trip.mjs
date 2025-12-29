@@ -75,3 +75,17 @@ export const updateTrip = async (req, res) => {
         })
     }
 }
+
+export async function deleteTrip(req, res) {
+    try {
+        const { tripId } = req.params;
+        const userId = req.userId;
+
+        const trip = await tripRepository.deleteTrip(tripId, userId);
+    } catch (err) {
+        console.error("deleteTrip error:", err);
+        return res.status(500).json({ message: "여행 삭제 실패" });
+    }
+
+    return res.json({ message: "여행 삭제 성공" });
+}
