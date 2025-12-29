@@ -29,7 +29,7 @@ router.post("/generate", isAuth, async (req, res) => {
         if (tripId) {
             trip = await Trip.findOne({ _id: tripId, owner: userId });
             if (!trip) {
-                return res.status(404).json({ message: "여행 정보를 찾을 수 없습니다" });
+                console.warn(`⚠️ Trip ${tripId} not found for user ${userId}, creating new one`);
             }
         }
 
