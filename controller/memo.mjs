@@ -78,3 +78,22 @@ export const deleteByTripId = async (req, res) => {
         return res.status(500).json({ error: 'Failed to delete all memos' });
     }
 }
+
+// 메모 수정
+export const updateMemo = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const memo = req.body;
+
+        const result = await memoRepository.updateMemo(id, memo);
+
+        if (!result) {
+            return res.status(404).json({ error: 'Memo not found' });
+        }
+
+        return res.json({ message: 'Memo updated successfully', id, memo });
+    } catch (error) {
+        console.error('Error updating memo:', error);
+        return res.status(500).json({ error: 'Failed to update memo' });
+    }
+}
