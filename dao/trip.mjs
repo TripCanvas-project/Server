@@ -139,27 +139,27 @@ function getCategoryIcon(category) {
   return iconMap[category] || "🏖️";
 }
 
-export async function createTrip(ownerId, tripData = {}) {
-  try {
-    const trip = await Trip.create({
-      title: "클릭하여 여행 타이틀 설정",
-      owner: ownerId,
-      destination: tripData.destination || {
-        name: "미정",
-        district: "미정",
-        city: "미정",
-      },
-      startDate: tripData.startDate,
-      endDate: tripData.endDate,
-      duration: tripData.duration || 2,
-      status: tripData.status || "planning",
-      // 나머지 필드는 스키마 default 값 사용
-    });
-    return trip;
-  } catch (err) {
-    console.error("tripDao.createTrip error:", err);
-    throw err;
-  }
+export async function createTrip(tripData = {}) {
+    try {
+        const trip = await Trip.create({
+            title: "클릭하여 여행 타이틀 설정",
+            owner: tripData.owner,
+            destination: tripData.destination || {
+                name: "미정",
+                district: "미정",
+                city: "미정",
+            },
+            startDate: tripData.startDate,
+            endDate: tripData.endDate,
+            duration: tripData.duration || 2,
+            status: tripData.status || "planning",
+            // 나머지 필드는 스키마 default 값 사용
+        });
+        return trip;
+    } catch (err) {
+        console.error("tripDao.createTrip error:", err);
+        throw err;
+    }
 }
 
 export async function updateTrip(tripId, ownerId, updateData) {
@@ -188,6 +188,73 @@ export async function deleteTrip(tripId, ownerId) {
   } catch (err) {
     console.error("tripDao.deleteTrip error:", err);
     throw err;
+  }
+}
+
+export async function createTripInvite(tripId, expireDays = 7) {
+  // 랜덤 토큰 생성
+  const token = crypto.randomBytes(16).toString("hex");
+  const expiresAt = new Date(Date.now() + expireDays * 24 * 60 * 60 * 1000);
+
+  // Trip의 invite 필드 업데이트
+  const trip = await Trip.findByIdAndUpdate(
+    tripId,
+    {
+      invite: {
+        token,
+        expiresAt,
+      },
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  if (!trip) {
+    throw new Error("Trip not found");
+  }
+
+  return {
+    inviteToken: token,
+    expiresAt,
+  };
+}
+
+// 초대 토큰으로 Trip 찾기
+export async function findTripByInviteToken(token) {
+  return await Trip.findOne({
+    "invite.token": token,
+  });
+}
+
+// 초대 정보 삭제
+export async function clearTripInvite(tripId) {
+  await Trip.findByIdAndUpdate(tripId, {
+    $unset: { invite: "" },
+  });
+}
+
+export async function addCollaborator(tripId, collaboratorId) {
+  const result = await Trip.updateOne(
+    {
+      _id: tripId,
+      "collaborators.userId": { $ne: collaboratorId },
+    },
+    {
+      $push: {
+        collaborators: {
+          userId: collaboratorId,
+          role: "viewer",
+          joinedAt: new Date(),
+        },
+      },
+      $inc: { peopleCount: 1 },
+    }
+  );
+
+  if (result.modifiedCount === 0) {
+    throw new Error("이미 참여한 사용자입니다.");
   }
 }
 
