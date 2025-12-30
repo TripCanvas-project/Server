@@ -42,6 +42,26 @@ router.get("/:tripId", async (req, res) => {
   }
 });
 
+router.get("/:tripId/status", isAuth, async (req, res) => {
+  try {
+    const { tripId } = req.params;
+    const userId = req.userId;
+
+    const trip = await Trip.findOne({ _id: tripId, owner: userId }).lean();
+
+    if (!trip) {
+      return res.status(404).json({ message: "여행을 찾을 수 없습니다." });
+    }
+
+    return res.json({ trip });
+  } catch (error) {
+    console.error("여행 정보 조회 오류:", error);
+    return res
+      .status(500)
+      .json({ message: "여행 정보 조회 중 오류가 발생했습니다." });
+  }
+});
+
 // 초대 링크 생성
 router.post("/:tripId/invite-link", isAuth, tripController.inviteCollaborator);
 
