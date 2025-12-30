@@ -54,7 +54,7 @@ router.post("/join/:inviteToken", isAuth, tripController.joinTripByInvite);
 
 router.post("/", tripController.createTrip);
 
-router.put("/:tripId", tripController.updateTrip);
+router.put("/:tripId", isAuth, tripController.updateTrip);
 
 router.delete("/:tripId", isAuth, tripController.deleteTrip);
 
