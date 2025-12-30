@@ -13,7 +13,6 @@ export const isAuth = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    console.log("auth.mjs에서 찍는 userID!!! ==>>", decoded.id);
     req.user = { id: decoded.id };
     req.userId = decoded.id;
 
