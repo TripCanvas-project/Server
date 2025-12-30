@@ -20,357 +20,340 @@ const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 
 router.post("/generate", isAuth, async (req, res) => {
-    try {
-        // ✅ isAuth에서 넣어준 userId 사용
-        const userId = req.userId;
-        const { tripId } = req.body;
+  try {
+    // ✅ isAuth에서 넣어준 userId 사용
+    const userId = req.userId;
+    const { tripId } = req.body;
 
-        let trip;
-        if (tripId) {
-            trip = await Trip.findOne({ _id: tripId, owner: userId });
-            if (!trip) {
-                console.warn(`⚠️ Trip ${tripId} not found for user ${userId}, creating new one`);
-            }
+    let trip;
+    if (tripId) {
+      trip = await Trip.findOne({ _id: tripId, owner: userId });
+      if (!trip) {
+        console.warn(
+          `⚠️ Trip ${tripId} not found for user ${userId}, creating new one`
+        );
+      }
+    }
+
+    if (!userId) {
+      return res.status(401).json({ message: "인증 정보가 없습니다(userId)" });
+    }
+
+    const userInput = { ...req.body, userId };
+
+    // ✅ Server/controller/TripPlan.py
+    const pythonScriptPath = path.join(
+      PROJECT_ROOT,
+      "controller",
+      "TripPlan.py"
+    );
+
+    console.log("pythonScriptPath =", pythonScriptPath);
+    console.log(
+      "controller files =",
+      fs.readdirSync(path.join(PROJECT_ROOT, "controller"))
+    );
+
+    // ✅ OS별 파이썬 실행 커맨드/인자 결정
+    const isWin = process.platform === "win32";
+    const pyCmd = isWin ? "py" : "python3";
+    const pyArgs = isWin ? ["-3", pythonScriptPath] : [pythonScriptPath];
+
+    const py = spawn(pyCmd, pyArgs, {
+      env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+      stdio: ["pipe", "pipe", "pipe"],
+      windowsHide: true,
+    });
+
+    console.log("[PY] cmd =", pyCmd);
+    console.log("[PY] args =", pyArgs);
+
+    // Python 출력 모으기
+    let pythonOutput = "";
+    let pythonError = "";
+
+    py.stdout.on("data", (data) => (pythonOutput += data.toString()));
+    py.stderr.on("data", (data) => {
+      const msg = data.toString();
+      pythonError += msg;
+      console.error("🐍 Python:", msg);
+    });
+
+    py.on("error", (err) => {
+      console.error("❌ Python spawn error:", err);
+      if (!res.headersSent) {
+        return res.status(500).json({
+          message: "Python 실행 실패(spawn error)",
+          cmd: pyCmd,
+          args: pyArgs,
+          error: String(err),
+        });
+      }
+    });
+
+    // ✅ 입력 전달 (줄바꿈 필수)
+    py.stdin.write(JSON.stringify(userInput) + "\n");
+    py.stdin.end();
+
+    // ✅ close에서 결과 처리
+    py.on("close", async (code, signal) => {
+      console.log("[PY] exit code =", code, "signal =", signal);
+
+      if (res.headersSent) return;
+      try {
+        if (code !== 0) {
+          return res.status(500).json({
+            message: "Python 실행 실패",
+            code,
+            signal,
+            stderr: pythonError || "(no stderr)",
+            stdoutPreview: pythonOutput.slice(0, 500),
+          });
         }
 
-        if (!userId) {
-            return res
-                .status(401)
-                .json({ message: "인증 정보가 없습니다(userId)" });
+        if (!pythonOutput || !pythonOutput.trim()) {
+          return res.status(500).json({
+            message: "Python 출력이 비어있습니다. (stdout empty)",
+            stderr: pythonError || "(no stderr)",
+          });
         }
 
-        const userInput = { ...req.body, userId };
-
-        // ✅ Server/controller/TripPlan.py
-        const pythonScriptPath = path.join(
-            PROJECT_ROOT,
-            "controller",
-            "TripPlan.py"
-        );
-
-        console.log("pythonScriptPath =", pythonScriptPath);
-        console.log(
-            "controller files =",
-            fs.readdirSync(path.join(PROJECT_ROOT, "controller"))
-        );
-
-        const py = spawn("python3", [pythonScriptPath], {
-            env: { ...process.env, PYTHONIOENCODING: "utf-8" },
-        });
-
-        // Python 출력 모으기
-        let pythonOutput = "";
-        let pythonError = "";
-
-        py.stdout.on("data", (data) => {
-            pythonOutput += data.toString();
-        });
-
-        py.stderr.on("data", (data) => {
-            const msg = data.toString();
-            pythonError += msg;
-            console.error("🐍 Python:", msg);
-        });
-
-        py.on("error", (err) => {
-            console.error("❌ Python spawn error:", err);
-        });
-
-        // 입력 전달
-        py.stdin.write(JSON.stringify(userInput));
-        py.stdin.end();
-
-        // ✅ close에서 결과 처리
-        py.on("close", async (code) => {
-            try {
-                if (code !== 0) {
-                    // stdout에 JSON이 있으면 그걸 우선 응답
-                    try {
-                        const maybe = JSON.parse(pythonOutput);
-                        if (maybe?.error?.type === "GEMINI_UNAVAILABLE") {
-                            return res.status(503).json(maybe);
-                        }
-                    } catch {}
-                    return res
-                        .status(500)
-                        .json({ message: "Python 실행 실패", code });
-                }
-
-                if (!pythonOutput || !pythonOutput.trim()) {
-                    return res.status(500).json({
-                        message: "Python 출력이 비어있습니다. (stdout empty)",
-                        stderr: pythonError || "(no stderr)",
-                    });
-                }
-
-                /* ===============================
+        /* ===============================
            1️⃣ Gemini 결과 파싱
         =============================== */
-                let aiResult;
-                try {
-                    aiResult = JSON.parse(pythonOutput);
-                    if (aiResult?.error?.type === "GEMINI_UNAVAILABLE") {
-                        return res.status(503).json(aiResult);
-                    }
-                } catch (e) {
-                    return res.status(500).json({
-                        message: "Python 출력 JSON 파싱 실패",
-                        error: String(e),
-                        stdoutPreview: pythonOutput.slice(0, 2000),
-                        stderr: pythonError || "(no stderr)",
-                    });
-                }
+        let aiResult;
+        try {
+          aiResult = JSON.parse(pythonOutput);
+          if (aiResult?.error?.type === "GEMINI_UNAVAILABLE") {
+            return res.status(503).json(aiResult);
+          }
+        } catch (e) {
+          return res.status(500).json({
+            message: "Python 출력 JSON 파싱 실패",
+            error: String(e),
+            stdoutPreview: pythonOutput.slice(0, 2000),
+            stderr: pythonError || "(no stderr)",
+          });
+        }
 
-                /* ===============================
+        /* ===============================
            2️⃣ Trip 생성
         =============================== */
-                if (trip){
-                    trip.title = aiResult.title;
-                    trip.description = aiResult.description;
+        if (trip) {
+          trip.title = aiResult.title;
+          trip.description = aiResult.description;
 
-                    trip.startDate = new Date(req.body.start_date);
-                    trip.endDate = new Date(req.body.end_date);
-                    trip.duration =
-                        (new Date(req.body.end_date) -
-                            new Date(req.body.start_date)) /
-                            (1000 * 60 * 60 * 24) +
-                        1;
+          trip.startDate = new Date(req.body.start_date);
+          trip.endDate = new Date(req.body.end_date);
+          trip.duration =
+            (new Date(req.body.end_date) - new Date(req.body.start_date)) /
+              (1000 * 60 * 60 * 24) +
+            1;
 
-                    trip.origin = {
-                        inputText: req.body.start_loc,
-                    };
+          trip.origin = {
+            inputText: req.body.start_loc,
+          };
 
-                    trip.destination = {
-                        city: req.body.end_area,
-                        district: req.body.detail_addr || "",
-                        name: `${req.body.end_area} ${
-                            req.body.detail_addr || ""
-                        }`.trim(),
-                    };
+          trip.destination = {
+            city: req.body.end_area,
+            district: req.body.detail_addr || "",
+            name: `${req.body.end_area} ${req.body.detail_addr || ""}`.trim(),
+          };
 
-                    trip.categories = req.body.place_themes
-                        ? req.body.place_themes
-                              .split(",")
-                              .map((t) => t.trim())
-                              .filter(Boolean)
-                        : [];
+          trip.categories = req.body.place_themes
+            ? req.body.place_themes
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean)
+            : [];
 
-                    trip.peopleCount = req.body.total_people;
+          trip.peopleCount = req.body.total_people;
 
-                    trip.constraints = {
-                        budget: {
-                            perPerson: req.body.budget_per_person,
-                            total:
-                                req.body.budget_per_person *
-                                req.body.total_people,
-                        },
-                    };
+          trip.constraints = {
+            budget: {
+              perPerson: req.body.budget_per_person,
+              total: req.body.budget_per_person * req.body.total_people,
+            },
+          };
 
-                    trip.status = 'active';
-                    await trip.save();
-                } else {
-                    trip = await Trip.create({
-                        title: aiResult.title,
-                        description: aiResult.description,
-                        owner: userId,
+          trip.status = "active";
+          await trip.save();
+        } else {
+          trip = await Trip.create({
+            title: aiResult.title,
+            description: aiResult.description,
+            owner: userId,
 
-                        startDate: new Date(req.body.start_date),
-                        endDate: new Date(req.body.end_date),
-                        duration:
-                            (new Date(req.body.end_date) -
-                                new Date(req.body.start_date)) /
-                                (1000 * 60 * 60 * 24) +
-                            1,
+            startDate: new Date(req.body.start_date),
+            endDate: new Date(req.body.end_date),
+            duration:
+              (new Date(req.body.end_date) - new Date(req.body.start_date)) /
+                (1000 * 60 * 60 * 24) +
+              1,
 
-                        origin: {
-                            inputText: req.body.start_loc,
-                        },
+            origin: {
+              inputText: req.body.start_loc,
+            },
 
-                        destination: {
-                            city: req.body.end_area,
-                            district: req.body.detail_addr || "",
-                            name: `${req.body.end_area} ${
-                                req.body.detail_addr || ""
-                            }`.trim(),
-                        },
+            destination: {
+              city: req.body.end_area,
+              district: req.body.detail_addr || "",
+              name: `${req.body.end_area} ${req.body.detail_addr || ""}`.trim(),
+            },
 
-                        categories: req.body.place_themes
-                            ? req.body.place_themes
-                                .split(",")
-                                .map((t) => t.trim())
-                                .filter(Boolean)
-                            : [],
+            categories: req.body.place_themes
+              ? req.body.place_themes
+                  .split(",")
+                  .map((t) => t.trim())
+                  .filter(Boolean)
+              : [],
 
-                        peopleCount: req.body.total_people,
+            peopleCount: req.body.total_people,
 
-                        constraints: {
-                            budget: {
-                                perPerson: req.body.budget_per_person,
-                                total:
-                                    req.body.budget_per_person *
-                                    req.body.total_people,
-                            },
-                        },
-                    })
-                };
+            constraints: {
+              budget: {
+                perPerson: req.body.budget_per_person,
+                total: req.body.budget_per_person * req.body.total_people,
+              },
+            },
+          });
+        }
 
-                /* ===============================
+        /* ===============================
            3️⃣ Place 미리 조회 (선택)
         =============================== */
-                const placesInCity = await Place.find({
-                    "address.city": req.body.end_area,
-                }).select("_id coordinates.coordinates title");
+        const placesInCity = await Place.find({
+          "address.city": req.body.end_area,
+        }).select("_id coordinates.coordinates title");
 
-                const placeMap = new Map(
-                    placesInCity.map((p) => [
-                        `${p.coordinates.coordinates[0].toFixed(
-                            6
-                        )},${p.coordinates.coordinates[1].toFixed(6)}`, // lng,lat
-                        p._id,
-                    ])
-                );
+        const placeMap = new Map(
+          placesInCity.map((p) => [
+            `${p.coordinates.coordinates[0].toFixed(
+              6
+            )},${p.coordinates.coordinates[1].toFixed(6)}`, // lng,lat
+            p._id,
+          ])
+        );
 
-                const parseCoords = (coords) => {
-                    if (!coords) return null;
+        const parseCoords = (coords) => {
+          if (!coords) return null;
 
-                    // python에서 "위도, 경도" 문자열을 준다고 했으니 lat,lng 순서
-                    const [lat, lng] = coords
-                        .split(",")
-                        .map((v) => Number(v.trim()));
+          // python에서 "위도, 경도" 문자열을 준다고 했으니 lat,lng 순서
+          const [lat, lng] = coords.split(",").map((v) => Number(v.trim()));
 
-                    if (isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) {
-                        return null;
-                    }
+          if (isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) {
+            return null;
+          }
 
-                    return { lat, lng };
-                };
+          return { lat, lng };
+        };
 
-                /* ===============================
+        /* ===============================
            4️⃣ dailyPlans 생성
         =============================== */
-                const dailyPlans = (aiResult.travel_plan || []).map(
-                    (dayPlan, dayIndex) => {
-                        const date = new Date(trip.startDate);
-                        date.setDate(date.getDate() + dayIndex);
+        const dailyPlans = (aiResult.travel_plan || []).map(
+          (dayPlan, dayIndex) => {
+            const date = new Date(trip.startDate);
+            date.setDate(date.getDate() + dayIndex);
 
-                        const places = (dayPlan.places || []).map(
-                            (place, idx) => {
-                                const coord = parseCoords(place.coords);
-                                const key = coord
-                                    ? `${coord.lng.toFixed(
-                                          6
-                                      )},${coord.lat.toFixed(6)}`
-                                    : null;
+            const places = (dayPlan.places || []).map((place, idx) => {
+              const coord = parseCoords(place.coords);
+              const key = coord
+                ? `${coord.lng.toFixed(6)},${coord.lat.toFixed(6)}`
+                : null;
 
-                                return {
-                                    order: idx + 1,
-                                    placeId: key
-                                        ? placeMap.get(key) || null
-                                        : null,
-                                    placeName: place.name,
-                                    coordinates: coord,
-                                    scheduledTime: 0,
-                                    estimatedDuration: 0,
-                                    estimatedCost: place.estimated_cost || 0,
-                                    description: place.description,
-                                    closestSubway: place.closest_subway,
-                                };
-                            }
-                        );
+              return {
+                order: idx + 1,
+                placeId: key ? placeMap.get(key) || null : null,
+                placeName: place.name,
+                coordinates: coord,
+                scheduledTime: 0,
+                estimatedDuration: 0,
+                estimatedCost: place.estimated_cost || 0,
+                description: place.description,
+                closestSubway: place.closest_subway,
+              };
+            });
 
-                        const accommodation =
-                            dayPlan.accommodation?.name &&
-                            dayPlan.accommodation.name !== "없음"
-                                ? (() => {
-                                      const coord = parseCoords(
-                                          dayPlan.accommodation.coords
-                                      );
-                                      const key = coord
-                                          ? `${coord.lng.toFixed(
-                                                6
-                                            )},${coord.lat.toFixed(6)}`
-                                          : null;
+            const accommodation =
+              dayPlan.accommodation?.name &&
+              dayPlan.accommodation.name !== "없음"
+                ? (() => {
+                    const coord = parseCoords(dayPlan.accommodation.coords);
+                    const key = coord
+                      ? `${coord.lng.toFixed(6)},${coord.lat.toFixed(6)}`
+                      : null;
 
-                                      return {
-                                          placeId: key
-                                              ? placeMap.get(key) || null
-                                              : null,
-                                          placeName: dayPlan.accommodation.name,
-                                          coordinates: coord,
-                                          checkInTime: "15:00",
-                                          checkOutTime: "11:00",
-                                          estimatedCost:
-                                              dayPlan.accommodation
-                                                  .estimated_cost || 0,
-                                          closestSubway:
-                                              dayPlan.accommodation
-                                                  .closest_subway,
-                                      };
-                                  })()
-                                : null;
+                    return {
+                      placeId: key ? placeMap.get(key) || null : null,
+                      placeName: dayPlan.accommodation.name,
+                      coordinates: coord,
+                      checkInTime: "15:00",
+                      checkOutTime: "11:00",
+                      estimatedCost: dayPlan.accommodation.estimated_cost || 0,
+                      closestSubway: dayPlan.accommodation.closest_subway,
+                    };
+                  })()
+                : null;
 
-                        return {
-                            day: dayPlan.day,
-                            date,
-                            places,
-                            accommodation,
-                            dayStats: {
-                                totalCost:
-                                    places.reduce(
-                                        (s, p) => s + (p.estimatedCost || 0),
-                                        0
-                                    ) + (accommodation?.estimatedCost || 0),
-                                placeCount: places.length,
-                            },
-                        };
-                    }
-                );
+            return {
+              day: dayPlan.day,
+              date,
+              places,
+              accommodation,
+              dayStats: {
+                totalCost:
+                  places.reduce((s, p) => s + (p.estimatedCost || 0), 0) +
+                  (accommodation?.estimatedCost || 0),
+                placeCount: places.length,
+              },
+            };
+          }
+        );
 
-                /* ===============================
+        /* ===============================
            5️⃣ Route 생성
         =============================== */
-                const route = await Route.create({
-                    tripId: trip._id,
-                    name: "AI 생성 일정",
-                    version: 1,
-                    type: "original",
-                    dailyPlans,
-                    totalCost: dailyPlans.reduce(
-                        (s, d) => s + (d.dayStats?.totalCost || 0),
-                        0
-                    ),
-                    generatedBy: "gemini-ai",
-                });
+        const route = await Route.create({
+          tripId: trip._id,
+          name: "AI 생성 일정",
+          version: 1,
+          type: "original",
+          dailyPlans,
+          totalCost: dailyPlans.reduce(
+            (s, d) => s + (d.dayStats?.totalCost || 0),
+            0
+          ),
+          generatedBy: "gemini-ai",
+        });
 
-                /* ===============================
+        /* ===============================
            6️⃣ Trip ↔ Route 연결
         =============================== */
-                trip.activeRoute = route._id;
-                await trip.save();
+        trip.activeRoute = route._id;
+        await trip.save();
 
-                /* ===============================
+        /* ===============================
            7️⃣ 응답
         =============================== */
-                return res.status(201).json({
-                    message: "Trip + Route 생성 완료",
-                    tripId: trip._id,
-                    routeId: route._id,
-                });
-            } catch (err) {
-                console.error(err);
-                return res.status(500).json({
-                    message: "Trip/Route 생성 실패",
-                    error: String(err),
-                    stderr: pythonError || "(no stderr)",
-                });
-            }
+        return res.status(201).json({
+          message: "Trip + Route 생성 완료",
+          tripId: trip._id,
+          routeId: route._id,
         });
-    } catch (err) {
+      } catch (err) {
         console.error(err);
-        return res
-            .status(500)
-            .json({ message: "실행 실패", error: String(err) });
-    }
+        return res.status(500).json({
+          message: "Trip/Route 생성 실패",
+          error: String(err),
+          stderr: pythonError || "(no stderr)",
+        });
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "실행 실패", error: String(err) });
+  }
 });
 
 export default router;
