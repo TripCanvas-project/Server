@@ -25,7 +25,7 @@ router.get("/", isAuth, tripController.getTripsForStatus);
 router.get("/:tripId", async (req, res) => {
   try {
     const { tripId } = req.params;
-    const userId = req.user?.id;
+    const userId = req.userId;
 
     const trip = await Trip.findOne({ _id: tripId, owner: userId }).lean();
 
@@ -42,8 +42,6 @@ router.get("/:tripId", async (req, res) => {
   }
 });
 
-router.post("/", tripController.createTrip);
-
 // 초대 링크 생성
 router.post("/:tripId/invite-link", isAuth, tripController.inviteCollaborator);
 
@@ -53,6 +51,8 @@ router.get("/join/:inviteToken", (req, res) => {
 });
 
 router.post("/join/:inviteToken", isAuth, tripController.joinTripByInvite);
+
+router.post("/", tripController.createTrip);
 
 router.put("/:tripId", tripController.updateTrip);
 
