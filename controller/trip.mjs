@@ -36,23 +36,23 @@ export async function getUserTripHistory(req, res) {
 }
 
 export async function createTrip(req, res) {
-    try {
-        const { title, destination, owner, startDate, endDate, status } = req.body;
+  try {
+    const { title, destination, owner, startDate, endDate, status } = req.body;
 
-        const newTrip = await tripRepository.createTrip({
-            title,
-            destination,
-            owner,
-            startDate,
-            endDate,
-            status,
-        });
-        console.log("Created New Trip:", newTrip);
-        res.status(201).json(newTrip);
-    } catch (err) {
-        console.error("createTrip error:", err);
-        res.status(500).json({ message: "새 여행 생성 실패" });
-    }
+    const newTrip = await tripRepository.createTrip({
+      title,
+      destination,
+      owner,
+      startDate,
+      endDate,
+      status,
+    });
+    console.log("Created New Trip:", newTrip);
+    res.status(201).json(newTrip);
+  } catch (err) {
+    console.error("createTrip error:", err);
+    res.status(500).json({ message: "새 여행 생성 실패" });
+  }
 }
 
 export const updateTrip = async (req, res) => {
@@ -163,15 +163,15 @@ export async function joinTripByInvite(req, res) {
 }
 
 export async function deleteTrip(req, res) {
-    try {
-        const { tripId } = req.params;
-        const userId = req.userId;
+  try {
+    const { tripId } = req.params;
+    const userId = req.userId;
 
-        const trip = await tripRepository.deleteTrip(tripId, userId);
-    } catch (err) {
-        console.error("deleteTrip error:", err);
-        return res.status(500).json({ message: "여행 삭제 실패" });
-    }
+    const trip = await tripRepository.deleteTrip(tripId, userId);
+  } catch (err) {
+    console.error("deleteTrip error:", err);
+    return res.status(500).json({ message: "여행 삭제 실패" });
+  }
 
-    return res.json({ message: "여행 삭제 성공" });
+  return res.json({ message: "여행 삭제 성공" });
 }
