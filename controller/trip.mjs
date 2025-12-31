@@ -37,12 +37,13 @@ export async function getUserTripHistory(req, res) {
 
 export async function createTrip(req, res) {
   try {
-    const { title, destination, owner, startDate, endDate, status } = req.body;
+    const userId = req.userId;
+    const { title, destination, startDate, endDate, status } = req.body;
 
     const newTrip = await tripRepository.createTrip({
       title,
       destination,
-      owner,
+      owner: userId,
       startDate,
       endDate,
       status,

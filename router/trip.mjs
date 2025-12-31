@@ -72,7 +72,7 @@ router.get("/join/:inviteToken", (req, res) => {
 
 router.post("/join/:inviteToken", isAuth, tripController.joinTripByInvite);
 
-router.post("/", tripController.createTrip);
+router.post("/", isAuth, tripController.createTrip);
 
 router.put("/:tripId", isAuth, tripController.updateTrip);
 
