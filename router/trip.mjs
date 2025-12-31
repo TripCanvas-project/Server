@@ -2,18 +2,19 @@ import express from "express";
 import { isAuth } from "../middleware/auth.mjs";
 import Trip from "../models/Trip.mjs";
 import * as tripController from "../controller/trip.mjs";
+import mongoose from "mongoose";
 
 const router = express.Router();
 
 // GET /trip/mine  - 로그인 유저의 Trip 목록
 router.get("/mine", isAuth, async (req, res) => {
-  const userId = req.user?.id;
-  const trips = await Trip.find({ owner: userId })
-    .sort({ createdAt: -1, _id: -1 })
-    .select("title description startDate endDate createdAt")
-    .lean();
+    const userId = req.user?.id;
+    const trips = await Trip.find({ owner: userId })
+        .sort({ createdAt: -1, _id: -1 })
+        .select("title description startDate endDate createdAt")
+        .lean();
 
-  return res.json({ trips });
+    return res.json({ trips });
 });
 
 // user의 최근 여행 기록 조회
@@ -22,44 +23,63 @@ router.get("/trip_history", tripController.getUserTripHistory);
 router.get("/", isAuth, tripController.getTripsForStatus);
 
 // GET /trip/:tripId - 특정 여행 정보 조회 (예산 정보 포함)
-router.get("/:tripId", async (req, res) => {
-  try {
-    const { tripId } = req.params;
-    const userId = req.userId;
+router.get("/:tripId", isAuth, async (req, res) => {
+    try {
+        const { tripId } = req.params;
+        const userId = req.user?.id;
 
-    const trip = await Trip.findOne({ _id: tripId, owner: userId }).lean();
+        if (!mongoose.isValidObjectId(tripId)) {
+            return res
+                .status(400)
+                .json({ message: "유효하지 않은 여행 ID입니다." });
+        }
 
-    if (!trip) {
-      return res.status(404).json({ message: "여행을 찾을 수 없습니다." });
+        const trip = await Trip.findOne({
+            _id: tripId,
+            $or: [{ owner: userId }, { "collaborators.userId": userId }],
+        }).lean();
+
+        if (!trip) {
+            return res
+                .status(404)
+                .json({ message: "여행을 찾을 수 없습니다." });
+        }
+
+        return res.json({ trip });
+    } catch (error) {
+        console.error("여행 정보 조회 오류:", error);
+        return res
+            .status(500)
+            .json({ message: "여행 정보 조회 중 오류가 발생했습니다." });
     }
-
-    return res.json({ trip });
-  } catch (error) {
-    console.error("여행 정보 조회 오류:", error);
-    return res
-      .status(500)
-      .json({ message: "여행 정보 조회 중 오류가 발생했습니다." });
-  }
 });
 
 router.get("/:tripId/status", isAuth, async (req, res) => {
-  try {
-    const { tripId } = req.params;
-    const userId = req.userId;
+    try {
+        const { tripId } = req.params;
+        const userId = req.user?.id;
 
-    const trip = await Trip.findOne({ _id: tripId, owner: userId }).lean();
+        if (!mongoose.isValidObjectId(tripId)) {
+            return res
+                .status(400)
+                .json({ message: "유효하지 않은 여행 ID입니다." });
+        }
 
-    if (!trip) {
-      return res.status(404).json({ message: "여행을 찾을 수 없습니다." });
+        const trip = await Trip.findOne({ _id: tripId, owner: userId }).lean();
+
+        if (!trip) {
+            return res
+                .status(404)
+                .json({ message: "여행을 찾을 수 없습니다." });
+        }
+
+        return res.json({ trip });
+    } catch (error) {
+        console.error("여행 정보 조회 오류:", error);
+        return res
+            .status(500)
+            .json({ message: "여행 정보 조회 중 오류가 발생했습니다." });
     }
-
-    return res.json({ trip });
-  } catch (error) {
-    console.error("여행 정보 조회 오류:", error);
-    return res
-      .status(500)
-      .json({ message: "여행 정보 조회 중 오류가 발생했습니다." });
-  }
 });
 
 // 초대 링크 생성
@@ -67,7 +87,7 @@ router.post("/:tripId/invite-link", isAuth, tripController.inviteCollaborator);
 
 // 초대 링크로 참여 (tripId, inviteToken)
 router.get("/join/:inviteToken", (req, res) => {
-  res.redirect(`/invite-bridge.html?invite=${req.params.inviteToken}`);
+    res.redirect(`/invite-bridge.html?invite=${req.params.inviteToken}`);
 });
 
 router.post("/join/:inviteToken", isAuth, tripController.joinTripByInvite);
