@@ -44,7 +44,7 @@ router.get("/:tripId", async (req, res) => {
     }
 });
 
-router.post("/", tripController.createTrip);
+router.post("/", isAuth, tripController.createTrip);
 
 // 초대 링크 생성
 router.post("/:tripId/invite-link", tripController.inviteCollaborator);

@@ -89,7 +89,7 @@ app.use("/user", userRouter);
 app.use("/plan", planRoutes);
 app.use("/route", routesRouter);
 app.use("/trip", tripRouter);
-app.use("/bucket", bucketRouter);
+app.use("/bucketlist", bucketRouter);
 app.use("/budget", budgetRouter);
 app.use("/schedule", scheduleRouter);
 app.use("/memo", memoRouter);
