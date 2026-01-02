@@ -2,6 +2,7 @@ import express from "express";
 import { isAuth } from "../middleware/auth.mjs";
 import Trip from "../models/Trip.mjs";
 import * as tripController from "../controller/trip.mjs";
+import mongoose from "mongoose";
 
 const router = express.Router();
 
@@ -22,10 +23,47 @@ router.get("/trip_history", tripController.getUserTripHistory);
 router.get("/", isAuth, tripController.getTripsForStatus);
 
 // GET /trip/:tripId - 특정 여행 정보 조회 (예산 정보 포함)
-router.get("/:tripId", async (req, res) => {
+router.get("/:tripId", isAuth, async (req, res) => {
     try {
         const { tripId } = req.params;
         const userId = req.user?.id;
+
+        if (!mongoose.isValidObjectId(tripId)) {
+            return res
+                .status(400)
+                .json({ message: "유효하지 않은 여행 ID입니다." });
+        }
+
+        const trip = await Trip.findOne({
+            _id: tripId,
+            $or: [{ owner: userId }, { "collaborators.userId": userId }],
+        }).lean();
+
+        if (!trip) {
+            return res
+                .status(404)
+                .json({ message: "여행을 찾을 수 없습니다." });
+        }
+
+        return res.json({ trip });
+    } catch (error) {
+        console.error("여행 정보 조회 오류:", error);
+        return res
+            .status(500)
+            .json({ message: "여행 정보 조회 중 오류가 발생했습니다." });
+    }
+});
+
+router.get("/:tripId/status", isAuth, async (req, res) => {
+    try {
+        const { tripId } = req.params;
+        const userId = req.user?.id;
+
+        if (!mongoose.isValidObjectId(tripId)) {
+            return res
+                .status(400)
+                .json({ message: "유효하지 않은 여행 ID입니다." });
+        }
 
         const trip = await Trip.findOne({ _id: tripId, owner: userId }).lean();
 
@@ -44,14 +82,20 @@ router.get("/:tripId", async (req, res) => {
     }
 });
 
+// 초대 링크 생성
+router.post("/:tripId/invite-link", isAuth, tripController.inviteCollaborator);
+
+// 초대 링크로 참여 (tripId, inviteToken)
+router.get("/join/:inviteToken", (req, res) => {
+    res.redirect(`/invite-bridge.html?invite=${req.params.inviteToken}`);
+});
+
+router.post("/join/:inviteToken", isAuth, tripController.joinTripByInvite);
+
 router.post("/", isAuth, tripController.createTrip);
 
-// 초대 링크 생성
-router.post("/:tripId/invite-link", tripController.inviteCollaborator);
+router.put("/:tripId", isAuth, tripController.updateTrip);
 
-// 초대 링크로 참여
-router.post("/:tripId/invite/join", tripController.joinTripByInvite);
-
-router.put("/:tripId", tripController.updateTrip);
+router.delete("/:tripId", isAuth, tripController.deleteTrip);
 
 export default router;

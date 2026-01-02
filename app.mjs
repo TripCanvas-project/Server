@@ -2,6 +2,8 @@ import express from "express";
 import path from "path";
 import userRouter from "./router/user.mjs";
 import connectDB from "./config/db.mjs";
+import session from "express-session";
+import { SESSION_SECRET } from "./config/session.mjs";
 // import { host } from "./config/host.js";
 import "dotenv/config";
 import cors from "cors";
@@ -28,6 +30,20 @@ const server = createServer(app);
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// localStorage 기반 JWT는 redirect가 안되기 때문에
+// 초대 링크 기능은 session 없이 구현 자체가 불가능해서 session 적용
+app.use(
+    session({
+        secret: SESSION_SECRET,
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            sameSite: "lax",
+            secure: false, // https 배포 시 true
+        },
+    })
+);
 
 // Socket.io 설정
 const io = new Server(server, {
@@ -72,11 +88,13 @@ app.get("/", (req, res) => {
 app.use(express.static(clientPublic));
 
 // app.use(cors({ origin: true, credentials: true }));
+app.options("*", cors());
 app.use(
     cors({
         origin: [
             "http://localhost:5500",
             "https://sunlike-diametrically-marta.ngrok-free.dev",
+            // "https://ferly-coxcombic-elroy.ngrok-free.dev",
         ], // 프론트 주소
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],

@@ -33,3 +33,8 @@ export async function deleteById(id) {
 export async function deleteByTripId(tripId) {
   return Memo.deleteMany({ tripId });
 }
+
+// 메모 수정
+export async function updateMemo(id, memo) {
+  return Memo.findOneAndUpdate({ id }, memo, { new: true });
+}

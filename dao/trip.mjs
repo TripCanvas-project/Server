@@ -61,7 +61,7 @@ export async function updateTripTitle(tripId, userId, title) {
     const trip = await Trip.findOneAndUpdate(
         {
             _id: tripId,
-            $or: [{ owner: userId }, { collaborators: userId }],
+            $or: [{ owner: userId }, { "collaborators.userId": userId }],
         },
         { $set: { title } },
         { new: true }
@@ -144,11 +144,11 @@ function getCategoryIcon(category) {
     return iconMap[category] || "🏖️";
 }
 
-export async function createTrip(ownerId, tripData = {}) {
+export async function createTrip(tripData = {}) {
     try {
         const trip = await Trip.create({
             title: "클릭하여 여행 타이틀 설정",
-            owner: ownerId,
+            owner: tripData.owner,
             destination: tripData.destination || {
                 name: "미정",
                 district: "미정",
@@ -181,11 +181,30 @@ export async function updateTrip(tripId, ownerId, updateData) {
     }
 }
 
+export async function deleteTrip(tripId, ownerId) {
+    try {
+        const trip = await Trip.findOneAndDelete({
+            _id: tripId,
+            owner: ownerId,
+        });
+
+        if (!trip) {
+            throw new Error("여행을 찾을 수 없습니다.");
+        }
+
+        return trip;
+    } catch (err) {
+        console.error("tripDao.deleteTrip error:", err);
+        throw err;
+    }
+}
+
 export async function createTripInvite(tripId, expireDays = 7) {
     // 랜덤 토큰 생성
     const token = crypto.randomBytes(16).toString("hex");
     const expiresAt = new Date(Date.now() + expireDays * 24 * 60 * 60 * 1000);
 
+    // Trip의 invite 필드 업데이트
     const trip = await Trip.findByIdAndUpdate(
         tripId,
         {
@@ -205,7 +224,7 @@ export async function createTripInvite(tripId, expireDays = 7) {
     }
 
     return {
-        token,
+        inviteToken: token,
         expiresAt,
     };
 }

@@ -72,17 +72,11 @@ const userSchema = new mongoose.Schema(
             },
             default: {},
         },
-
-        stats: {
-            totalTrips: { type: Number, default: 0 },
-            completedTrips: { type: Number, default: 0 },
-            totalPlaces: { type: Number, default: 0 },
-            totalBucketlists: { type: Number, default: 0 },
-            completedBucketlists: { type: Number, default: 0 },
-        },
     },
     {
         timestamps: true,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true }
     }
 );
 
@@ -96,6 +90,28 @@ userSchema.virtual("bucketlists", {
     ref: "Bucketlist",
     localField: "_id",
     foreignField: "userId",
+});
+
+userSchema.virtual("stats").get(function() {
+    const trips = this.trips || [];
+    const bucketlists = this.bucketlists || [];
+    
+    // Trip status별 카운트
+    const totalTrips = trips.length || 0;
+    const planningTrips = trips.filter(t => t.status === 'planning').length || 0;
+    const completedTrips = trips.filter(t => t.status === 'completed').length || 0;
+    
+    // Bucketlist 카운트
+    const totalBucketlists = bucketlists.length || 0;
+    const completedBucketlists = bucketlists.filter(b => b.isCompleted).length || 0;
+    
+    return {
+        totalTrips,
+        planningTrips,
+        completedTrips,
+        totalBucketlists,
+        completedBucketlists
+    };
 });
 
 export default mongoose.model("User", userSchema);

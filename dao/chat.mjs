@@ -9,7 +9,7 @@ export async function createMessage(messageData) {
 // 특정 여행의 채팅 기록 조회
 export async function findByTripId(tripId, limit = 100) {
   return ChatMessage.find({ tripId })
-    .sort({ timestamp: -1 })
+    .sort({ timestamp: 1})
     .limit(limit)
     .lean();
 }

@@ -6,6 +6,8 @@ const router = express.Router();
 // 메모 생성
 router.post('/', memoController.createMemo);
 
+router.put('/:id', memoController.updateMemo);
+
 // 특정 여행의 메모 목록 조회
 router.get('/:tripId', memoController.getByTripId);
 

@@ -196,7 +196,7 @@ const tripSchema = new mongoose.Schema(
         // 여행 상태
         status: {
             type: String,
-            enum: ["planning", "active", "completed", "cancelled"],
+            enum: ["planning", "active", "completed"],
             default: "planning",
         },
         progress: {
