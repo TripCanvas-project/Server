@@ -14,5 +14,6 @@ router.get("/:id", bucketController.getBucketById);
 router.post("/:id/items", bucketController.addItemToBucket);
 router.patch("/:id/items/:itemId", bucketController.updateBucketItem);
 router.delete("/:id", bucketController.deleteBucket);
+router.delete("/:id/items/:itemId", bucketController.deleteBucketItem);
 
 export default router;
