@@ -53,7 +53,11 @@ export async function findTripsByUserIdAndStatus(userId, status) {
   return await Trip.find({
     status,
     $or: [{ owner: objectId }, { "collaborators.userId": objectId }],
-  }).lean();
+  })
+    .sort({ createdAt: -1 })
+    .populate("owner", "nickname email") // ✅ 추가
+    .populate("collaborators.userId", "nickname email") // (선택) 일관성
+    .lean();
 }
 
 // trip title 업데이트 (권한: owner or collaborator only)
