@@ -100,4 +100,6 @@ router.put("/:tripId", isAuth, tripController.updateTrip);
 
 router.delete("/:tripId", isAuth, tripController.deleteTrip);
 
+router.delete("/:tripId/leave", isAuth, tripController.leaveTrip);
+
 export default router;
