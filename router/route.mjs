@@ -158,7 +158,11 @@ router.get("/latest", isAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
 
-    const trips = await Trip.find({ owner: userId }).select("_id").lean();
+    const trips = await Trip.find({
+      $or: [{ owner: userId }, { "collaborators.userId": userId }],
+    })
+      .select("_id")
+      .lean();
     const tripIds = trips.map((t) => t._id);
 
     if (!tripIds.length) {
@@ -257,7 +261,10 @@ router.get("/by-trip/:tripId", isAuth, async (req, res) => {
       return res.status(400).json({ message: "잘못된 tripId" });
     }
 
-    const trip = await Trip.findOne({ _id: tripId, owner: userId })
+    const trip = await Trip.findOne({
+      _id: tripId,
+      $or: [{ owner: userId }, { "collaborators.userId": userId }],
+    })
       .select("_id")
       .lean();
 
