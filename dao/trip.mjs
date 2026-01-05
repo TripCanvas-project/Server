@@ -53,7 +53,11 @@ export async function findTripsByUserIdAndStatus(userId, status) {
   return await Trip.find({
     status,
     $or: [{ owner: objectId }, { "collaborators.userId": objectId }],
-  }).lean();
+  })
+    .sort({ createdAt: -1 })
+    .populate("owner", "nickname email") // ✅ 추가
+    .populate("collaborators.userId", "nickname email") // (선택) 일관성
+    .lean();
 }
 
 // trip title 업데이트 (권한: owner or collaborator only)
@@ -236,6 +240,29 @@ export async function clearTripInvite(tripId) {
   await Trip.findByIdAndUpdate(tripId, {
     $unset: { invite: "" },
   });
+}
+
+// ✅ collaborators에서 userId 제거 (owner는 나가기 불가)
+export async function leaveTripAsCollaborator(tripId, userId) {
+  if (!mongoose.Types.ObjectId.isValid(tripId)) return null;
+  if (!mongoose.Types.ObjectId.isValid(userId)) return null;
+
+  const trip = await Trip.findById(tripId).select("owner").lean();
+  if (!trip) return null;
+
+  if (String(trip.owner) === String(userId)) {
+    throw new Error("OWNER_CANNOT_LEAVE");
+  }
+
+  const result = await Trip.updateOne(
+    { _id: tripId, "collaborators.userId": userId },
+    {
+      $pull: { collaborators: { userId } },
+      $inc: { peopleCount: -1 },
+    }
+  );
+
+  return { modifiedCount: result.modifiedCount };
 }
 
 export async function addCollaborator(tripId, collaboratorId) {

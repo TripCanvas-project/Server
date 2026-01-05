@@ -95,6 +95,7 @@ app.use(
             "http://localhost:5500",
             "https://sunlike-diametrically-marta.ngrok-free.dev",
             // "https://ferly-coxcombic-elroy.ngrok-free.dev",
+            "https://camille-imperceptible-reciprocatively.ngrok-free.dev",
         ], // 프론트 주소
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
