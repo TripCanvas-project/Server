@@ -4,7 +4,7 @@ AI 기반 여행 플래너 **TripCanvas**의 백엔드입니다.
 사용자·여행·경로·메모·채팅·버킷리스트·일정·예산을 관리하는 REST API와, Socket.IO 기반의 실시간 협업(채팅·메모·화상)을 제공합니다.  
 또한 Python + Google Gemini를 이용해 여행 경로를 자동으로 생성합니다.
 
-<!-- 이미지: Server 아키텍처 (Client ↔ Express/API ↔ MongoDB, Socket.IO, Python TripPlan.py) 다이어그램 -->
+![](./upload/Screenshot%202026-02-25%20at%204.56.32 PM.png)
 
 ### 주요 기능
 
@@ -245,18 +245,3 @@ Server/
    ```bash
    npm start    # node app.mjs
    ```
-
-4. 서버가 올라가면 `app.mjs`에서 `Client/public`을 정적 폴더로 서빙하므로,  
-   브라우저에서 예: `http://localhost:8080/` 로 접속하면 클라이언트를 함께 확인할 수 있습니다.
-
-> AI 경로 생성 기능을 사용하려면 Python 3 및 Gemini 설정이 올바르게 되어 있어야 합니다.  
-> 개발 중 nodemon을 사용할 때는 Python 실행 시간이 긴 경우 서버가 중간에 재시작되지 않도록 설정에 유의하세요.
-
-### 개발 팁
-
-- 새로운 라우트를 추가할 때는 **router → controller → dao → model** 흐름을 유지하면 구조가 깔끔해집니다.
-- Socket.IO 관련 이슈를 디버깅할 때는 `sockets/index.mjs` 및 각 핸들러의 로그를 확인하세요.
-- 인증이 필요한 엔드포인트는 반드시 `isAuth` 미들웨어를 통과하도록 설정해야 합니다.
-
-<!-- 이미지: 로그/헬스체크/소켓 통계가 보이는 서버 모니터링 스크린샷 -->
-
